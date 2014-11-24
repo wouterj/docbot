@@ -1,0 +1,4 @@
+suites:
+    main:
+        namespace: Stoffer
+        psr4_prefix: Stoffer

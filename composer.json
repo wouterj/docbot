@@ -1,0 +1,24 @@
+{
+    "name": "wouterj/stoffer",
+    "description": "A linter tool for documentations.",
+    "license": "BSD",
+
+    "require": {
+        "symfony/console": "~2.3",
+        "symfony/finder": "~2.3",
+        "gnugat/redaktilo": "~1.1",
+        "zendframework/zend-eventmanager": "~2.3",
+        "symfony/dependency-injection": "~2.5",
+        "symfony/config": "~2.3"
+    },
+    "require-dev": {
+        "phpspec/phpspec": "2.1.0-RC1"
+    },
+
+    "autoload": {
+        "psr-4": {"Stoffer\\": "src"}
+    },
+    "autoload-dev": {
+        "psr-0": {"spec\\": "."}
+    }
+}
