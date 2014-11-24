@@ -24,6 +24,11 @@ class Stoffer
         $this->eventManager->setSharedManager($eventManager ?: new SharedEventManager());
     }
 
+    public function getEventManager()
+    {
+        return $this->eventManager;
+    }
+
     public function addReviewer(Reviewer $reviewer, $priority = 0)
     {
         $this->eventManager->attach('file_review_requested', array($reviewer, 'review'), $priority);
