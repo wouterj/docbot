@@ -25,9 +25,14 @@ class Extension extends Base implements ActsOnCompilation
      */
     public function load(array $config, ContainerBuilder $container)
     {
+        $config = call_user_func_array('array_merge_recursive', array_merge(
+            array('reviewers' => array('types' => array())),
+            $config
+        ));
+
         $this->loadServices($container);
         $this->loadCommands($container);
-        $this->loadReviewers($container);
+        $this->loadReviewers($container, $config['reviewers']['types']);
     }
 
     private function loadServices(ContainerBuilder $container)
@@ -67,18 +72,33 @@ class Extension extends Base implements ActsOnCompilation
         $container->setDefinition('stoffer.command.lint', $definition);
     }
 
-    protected function loadReviewers(ContainerBuilder $container)
+    protected function loadReviewers(ContainerBuilder $container, array $types)
     {
-        $container->register('reviewer.line_length', 'Stoffer\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.trailing_whitespace', 'Stoffer\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_underline', 'Stoffer\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
+        foreach ($types as $type) {
+            $this->{'load'.ucfirst($type).'Reviewers'}($container);
+        }
+    }
+
+    protected function loadSymfonyReviewers(ContainerBuilder $container)
+    {
         $container->register('reviewer.unstyled_admonitions', 'Stoffer\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_case', 'Stoffer\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.directive_whitespace', 'Stoffer\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.first_person', 'Stoffer\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.shortphp_syntax', 'Stoffer\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
+    }
+
+    protected function loadDocReviewers(ContainerBuilder $container)
+    {
+        $container->register('reviewer.title_case', 'Stoffer\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.first_person', 'Stoffer\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.title_level', 'Stoffer\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.line_length', 'Stoffer\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
+    }
+
+    protected function loadRstReviewers(ContainerBuilder $container)
+    {
+        $container->register('reviewer.trailing_whitespace', 'Stoffer\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.faulty_literals', 'Stoffer\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.directive_whitespace', 'Stoffer\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_underline', 'Stoffer\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
     }
 
     /**

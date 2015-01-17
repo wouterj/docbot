@@ -28,7 +28,7 @@ class Lint extends Command
         $this->setName('lint')
             ->setDescription('Reports any problems found in the given files')
             ->addArgument('path', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'One file, list of files or a directory')
-            ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Where to put the output (defaults to cli)', 'cli')
+            ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Where to put the output', 'cli')
         ;
     }
 

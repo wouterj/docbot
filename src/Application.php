@@ -52,6 +52,15 @@ class Application extends BaseApplication
                 array('StofferCore')
             )
         );
+        $definition->addOption(
+            new InputOption(
+                'types',
+                't',
+                InputOption::VALUE_REQUIRED,
+                'The reviewer types (available: rst, doc, symfony)',
+                'rst, doc, symfony'
+            )
+        );
 
         return $definition;
     }
@@ -88,6 +97,12 @@ class Application extends BaseApplication
         }
 
         $factory->addExtension(new CliExtension($input, $output));
+
+        $factory->addConfigFor('stoffer', array(
+            'reviewers' => array(
+                'types' => array_map('trim', explode(',', $input->getParameterOption(array('--types', '-t'), 'rst, doc, symfony'))),
+            ),
+        ));
 
         return $factory->createContainer();
     }

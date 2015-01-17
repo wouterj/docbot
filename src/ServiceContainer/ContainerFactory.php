@@ -14,6 +14,7 @@ class ContainerFactory
 {
     private $extensions = array('Stoffer\ServiceContainer\Extension');
     private $passes = array();
+    private $config = array();
 
     public function addCompiler(CompilerPassInterface $compilerPass)
     {
@@ -23,6 +24,15 @@ class ContainerFactory
     public function addExtension(ExtensionInterface $extension)
     {
         $this->extensions[] = $extension;
+    }
+
+    public function addConfigFor($name, array $config)
+    {
+        if (!isset($this->config[$name])) {
+            $this->config[$name] = array();
+        }
+
+        $this->config[$name] = array_merge($this->config[$name], $config);
     }
 
     public function createContainer()
@@ -43,6 +53,10 @@ class ContainerFactory
         }
 
         $container->addCompilerPass(new InlineCompilePass());
+
+        foreach ($this->config as $name => $config) {
+            $container->loadFromExtension($name, $config);
+        }
 
         $container->compile();
 
