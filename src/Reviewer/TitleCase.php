@@ -7,7 +7,18 @@ use Zend\EventManager\Event;
 
 class TitleCase extends Base
 {
-    static protected $closedClassWords = array('the', 'a', 'of', 'an', 'and', 'but', 'when', 'that', 'this', 'how', 'to', 'with', 'other', 'between', 'from', 'in', 'versus', 'you', 'we', 'let');
+    static protected $closedClassWords = array(
+        // conjunctions
+        'and', 'or', 'but', 'if', 'while', 'unless', 'as', 'because', 'since', 'without',
+        // determiners
+        'the', 'a', 'an', 'any', 'those', 'which', 'other', 'your',
+        // prepositions
+        'to', 'from', 'at', 'with', 'of', 'in', 'between', 'inside', 'about', 'on',
+        // pronouns
+        'you', 'them', 'we', 'she', 'who', 'that', 'this',
+
+        'when', 'how', 'versus', 'vs', 'let', 'is', 'be', 'for', 'each', 'not', 'out', 'based',
+    );
 
     public function reviewLine($line, $lineNumber, $file)
     {
@@ -20,11 +31,21 @@ class TitleCase extends Base
             }
 
             $correctTitle = '';
+            $nextShouldBeCapitialized = false;
             foreach ($words as $word) {
-                if (in_array(strtolower($word), self::$closedClassWords)) {
+                $wordIsInClosedClass = in_array(strtolower($word), self::$closedClassWords);
+                if (!$nextShouldBeCapitialized && $wordIsInClosedClass) {
+                    // lowercase
                     $correctTitle .= strtolower($word[0]) . substr($word, 1);
                 } else {
+                    // capitialize
                     $correctTitle .= ucfirst($word);
+                }
+
+                if (in_array(substr($correctTitle, -1), array(':', '.'))) {
+                    $nextShouldBeCapitialized = true;
+                } else {
+                    $nextShouldBeCapitialized = false;
                 }
 
                 $correctTitle .= ' ';
@@ -34,7 +55,7 @@ class TitleCase extends Base
 
             if ($correctTitle !== $titleText) {
                 $this->reportError(
-                    'All words, except from closed-class words, have to be capitalized: "'.$correctTitle.'"',
+                    'All words, except from closed-class words, have to be capitalized: "'.$correctTitle.'" (experimental)',
                     $file->getLine($lineNumber - 1),
                     $file,
                     $lineNumber
