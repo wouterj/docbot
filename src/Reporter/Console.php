@@ -7,6 +7,7 @@ use Stoffer\Event\RequestFileReview;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Output\OutputInterface;
 use Zend\EventManager\Event;
+use Zend\Stdlib\Request;
 
 /**
  * An output printer that prints into the console.
@@ -47,6 +48,7 @@ class Console
         if (0 === $errorCount) {
             $this->outputBlock('There where no errors founds');
         } else {
+            ksort($this->errors);
             foreach ($this->errors as $lineNumber => $errors) {
                 $this->output->writeln('<comment>['.$lineNumber.']</comment> "'.$errors['_line'].'"');
 
