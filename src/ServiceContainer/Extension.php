@@ -78,6 +78,7 @@ class Extension extends Base implements ActsOnCompilation
         $container->register('reviewer.first_person', 'Stoffer\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.shortphp_syntax', 'Stoffer\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.title_level', 'Stoffer\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.faulty_literals', 'Stoffer\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
     }
 
     /**
