@@ -2,19 +2,24 @@
 
 namespace Stoffer;
 
+use Stoffer\ServiceContainer\CliExtension;
 use Stoffer\ServiceContainer\ContainerFactory;
 use Stoffer\ServiceContainer\Extension;
-use Stoffer\ServiceContainer\ExtensionResolver;
+use Stoffer\ServiceContainer\ExtensionNameResolver;
 use Symfony\Component\Console\Application as BaseApplication;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * The CLI application Stoffer.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class Application extends BaseApplication
 {
+    /** @var \Symfony\Component\DependencyInjection\Container|null */
     private $container;
     private $initialized = false;
 
@@ -30,15 +35,7 @@ class Application extends BaseApplication
 
     public function doRun(InputInterface $input, OutputInterface $output)
     {
-        $this->container = $this->buildContainer($input);
-
-        if (!$this->initialized) {
-            foreach ($this->container->getParameter('console.commands') as $command) {
-                $this->add($this->container->get($command));
-            }
-
-            $this->initialized = true;
-        }
+        $this->initializeIfNeeded($input, $output);
 
         return parent::doRun($input, $output);
     }
@@ -48,8 +45,8 @@ class Application extends BaseApplication
         $definition = parent::getDefaultInputDefinition();
         $definition->addOption(
             new InputOption(
-                'filters',
-                'f',
+                'extensions',
+                'e',
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
                 'The extensions to enable',
                 array('StofferCore')
@@ -59,14 +56,38 @@ class Application extends BaseApplication
         return $definition;
     }
 
-    private function buildContainer(InputInterface $input)
+    private function initializeIfNeeded(InputInterface $input, OutputInterface $output)
+    {
+        if (!$this->initialized) {
+            $this->initializeContainer($input, $output);
+            $this->initializeCommands();
+
+            $this->initialized = true;
+        }
+    }
+
+    private function initializeContainer(InputInterface $input, OutputInterface $output)
+    {
+        $this->container = $this->buildContainer($input, $output);
+    }
+
+    private function initializeCommands()
+    {
+        foreach ($this->container->getParameter('console.commands') as $command) {
+            $this->add($this->container->get($command));
+        }
+    }
+
+    private function buildContainer(InputInterface $input, OutputInterface $output)
     {
         $factory = new ContainerFactory();
-        $resolver = new ExtensionResolver();
+        $resolver = new ExtensionNameResolver();
 
-        foreach ($input->getParameterOption(array('filter', 'f'), array()) as $extension) {
+        foreach ($input->getParameterOption(array('extensions', 'e'), array()) as $extension) {
             $factory->addExtension($resolver->resolve($extension));
         }
+
+        $factory->addExtension(new CliExtension($input, $output));
 
         return $factory->createContainer();
     }

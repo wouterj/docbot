@@ -21,7 +21,12 @@ class TitleLevel extends Base
             $level = array_search($character, $this->levels);
 
             if (false === $level) {
-                $this->reportError('Only =, -, ~, . and " should be used as title underlines', $line, $lineNumber + 1);
+                $this->reportError(
+                    'Only =, -, ~, . and " should be used as title underlines', $line, $lineNumber + 1,
+                    $line,
+                    $file,
+                    $lineNumber + 1
+                );
 
                 return;
             }

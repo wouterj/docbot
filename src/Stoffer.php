@@ -2,18 +2,21 @@
 
 namespace Stoffer;
 
-use Gnugat\Redaktilo\EditorFactory;
+use Stoffer\Reviewer;
 use Gnugat\Redaktilo\Text;
-use \Stoffer\Reviewer;
 use Zend\EventManager\EventManager;
+use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\SharedEventManager;
 use Zend\EventManager\SharedEventManagerInterface;
 
 /**
+ * The main access point for reviewing jobs.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class Stoffer
 {
+    /** @var EventManagerInterface */
     private $eventManager;
 
     public function __construct(SharedEventManagerInterface $eventManager = null)
@@ -29,17 +32,20 @@ class Stoffer
         return $this->eventManager;
     }
 
+    /**
+     * A helper function to attach the reviewer to the correct events
+     */
     public function addReviewer(Reviewer $reviewer, $priority = 0)
     {
         $this->eventManager->attach('file_review_requested', array($reviewer, 'review'), $priority);
         $reviewer->getEventManager()->setSharedManager($this->eventManager->getSharedManager());
     }
 
-    public function lint(Text $file, $name)
+    public function lint(Text $file)
     {
         $params = new \stdClass();
         $params->file = $file;
-        $params->name = $name;
+        $params->name = $file->getFilename();
 
         $this->eventManager->trigger('file_review_requested', 'stoffer', $params);
     }

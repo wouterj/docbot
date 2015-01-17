@@ -8,14 +8,17 @@ use Symfony\Component\DependencyInjection\Extension\Extension as Base;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
+ * The core extension.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class Extension extends Base implements UsesTags
+class Extension extends Base implements ActsOnCompilation
 {
     const STOFFER_ID = 'stoffer';
     const REVIEWER_TAG = 'reviewer';
     const SHARED_EVENT_MANAGER_ID = 'event_manager';
     const LISTENER_TAG = 'event_listener';
+    const COMMAND_TAG = 'command';
 
     /**
      * {@inheritDocs}
@@ -27,42 +30,16 @@ class Extension extends Base implements UsesTags
         $this->loadReviewers($container);
     }
 
-    protected function loadCommands(ContainerBuilder $container)
-    {
-        $definition = new Definition('Stoffer\Lint\Command\lint');
-        $definition->addTag('command');
-        $container->setDefinition('lint.command', $definition);
-    }
-
-    protected function loadReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.line_length', 'Stoffer\Lint\Reviewer\LineLength')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.trailing_whitespace', 'Stoffer\Lint\Reviewer\TrailingWhitespace')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.title_underline', 'Stoffer\Lint\Reviewer\TitleUnderline')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.unstyled_admonitions', 'Stoffer\Lint\Reviewer\UnstyledAdmonitions')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.title_case', 'Stoffer\Lint\Reviewer\TitleCase')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.directive_whitespace', 'Stoffer\Lint\Reviewer\DirectiveWhitespace')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.first_person', 'Stoffer\Lint\Reviewer\FirstPerson')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.shortphp_syntax', 'Stoffer\Lint\Reviewer\ShortPhpSyntax')->addTag(CoreExtension::REVIEWER_TAG);
-        $container->register('reviewer.title_level', 'Stoffer\Lint\Reviewer\TitleLevel')->addTag(CoreExtension::REVIEWER_TAG);
-    }
-
-    public function compile(ContainerBuilder $container)
-    {
-        $this->registerCommands($container);
-        $this->registerReviewers($container);
-        $this->registerListeners($container);
-    }
-
     private function loadServices(ContainerBuilder $container)
     {
-        $container->setDefinition(self::STOFFER_ID, new Definition('Stoffer\Core\Stoffer', array(
+        $container->setDefinition(self::STOFFER_ID, new Definition('Stoffer\Stoffer', array(
             new Reference(self::SHARED_EVENT_MANAGER_ID),
         )));
 
         $container->register(self::SHARED_EVENT_MANAGER_ID, 'Zend\EventManager\SharedEventManager');
 
-        $container->register('reporter.console', 'Stoffer\Core\Reporter\Console')
+        $container->register('reporter.console', 'Stoffer\Reporter\Console')
+            ->addArgument('%cli.output%')
             ->addTag(self::LISTENER_TAG, array(
                 'target' => 'reviewer',
                 'event' => 'error_reported',
@@ -83,6 +60,36 @@ class Extension extends Base implements UsesTags
         ;
     }
 
+    protected function loadCommands(ContainerBuilder $container)
+    {
+        $definition = new Definition('Stoffer\Command\lint');
+        $definition->addTag(self::COMMAND_TAG);
+        $container->setDefinition('stoffer.command.lint', $definition);
+    }
+
+    protected function loadReviewers(ContainerBuilder $container)
+    {
+        $container->register('reviewer.line_length', 'Stoffer\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.trailing_whitespace', 'Stoffer\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_underline', 'Stoffer\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.unstyled_admonitions', 'Stoffer\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_case', 'Stoffer\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.directive_whitespace', 'Stoffer\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.first_person', 'Stoffer\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.shortphp_syntax', 'Stoffer\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_level', 'Stoffer\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
+    }
+
+    /**
+     * {@inheritDocs}
+     */
+    public function compile(ContainerBuilder $container)
+    {
+        $this->registerCommands($container);
+        $this->registerReviewers($container);
+        $this->registerListeners($container);
+    }
+
     private function registerCommands(ContainerBuilder $container)
     {
         if ($container->hasParameter('console.commands')) {
@@ -91,8 +98,9 @@ class Extension extends Base implements UsesTags
             $commands = array();
         }
 
-        foreach (array_keys($container->findTaggedServiceIds('command')) as $command) {
-            $commands[] = $command;
+        $commandServiceIds = array_keys($container->findTaggedServiceIds(self::COMMAND_TAG));
+        foreach ($commandServiceIds as $commandServiceId) {
+            $commands[] = $commandServiceId;
         }
 
         $container->setParameter('console.commands', $commands);

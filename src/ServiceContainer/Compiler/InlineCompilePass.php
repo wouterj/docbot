@@ -2,7 +2,7 @@
 
 namespace Stoffer\ServiceContainer\Compiler;
 
-use Stoffer\ServiceContainer\UsesTags;
+use Stoffer\ServiceContainer\ActsOnCompilation;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -17,7 +17,7 @@ class InlineCompilePass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         foreach ($container->getExtensions() as $extension) {
-            if (!$extension instanceof UsesTags) {
+            if (!$extension instanceof ActsOnCompilation) {
                 continue;
             }
 

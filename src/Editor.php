@@ -7,6 +7,8 @@ use Gnugat\Redaktilo\Text;
 
 /**
  * @author Wouter J <wouter@wouterj.nl>
+ *
+ * @todo remove when Redaktilo supports it natively
  */
 class Editor
 {

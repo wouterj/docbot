@@ -46,6 +46,10 @@ class Lint extends Command
 
     private function lintFile($path)
     {
+        if ($path instanceof \SplFileInfo) {
+            $path = $path->getPathname();
+        }
+
         $this->getContainer()->get('stoffer')->lint(EditorFactory::createEditor()->open($path));
     }
 

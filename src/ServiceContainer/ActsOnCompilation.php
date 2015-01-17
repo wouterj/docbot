@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 /**
  * @author Wouter J <wouter@wouterj.nl>
  */
-interface UsesTags
+interface ActsOnCompilation
 {
     public function compile(ContainerBuilder $container);
 }

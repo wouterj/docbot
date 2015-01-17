@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
  */
 class ContainerFactory
 {
-    private $extensions = array('Stoffer\Core\ServiceContainer\Extension', 'Stoffer\Lint\ServiceContainer\Extension');
+    private $extensions = array('Stoffer\ServiceContainer\Extension');
     private $passes = array();
 
     public function addCompiler(CompilerPassInterface $compilerPass)
@@ -30,9 +30,12 @@ class ContainerFactory
         $container = new ContainerBuilder();
 
         foreach ($this->extensions as $extension) {
-            $e = new $extension();
-            $container->registerExtension($e);
-            $container->loadFromExtension($e->getAlias(), array());
+            if (!is_object($extension)) {
+                $extension = new $extension();
+            }
+
+            $container->registerExtension($extension);
+            $container->loadFromExtension($extension->getAlias(), array());
         }
 
         foreach ($this->passes as $pass) {

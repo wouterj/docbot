@@ -3,21 +3,26 @@
 namespace Stoffer\Reporter;
 
 use Symfony\Component\Console\Helper\FormatterHelper;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Zend\EventManager\Event;
 
 /**
+ * An output printer that prints into the console.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class Console
 {
-    /** @var ConsoleOutput */
+    /** @var OutputInterface */
     private $output;
     private $errors = array();
+    /** @var FormatterHelper */
+    private $formatterHelper;
 
-    public function __construct()
+    public function __construct(OutputInterface $output)
     {
-        $this->output = new ConsoleOutput();
+        $this->formatterHelper = new FormatterHelper();
+        $this->output = $output;
     }
 
     public function printFileName(Event $event)
@@ -30,31 +35,27 @@ class Console
             $filename,
             str_repeat('=', strlen($filename)),
             '</fg=blue>',
-            '',
         ));
     }
 
     public function printReport(Event $event)
     {
-        $helper = new FormatterHelper();
-        if (0 === $count = count(array_merge($this->errors))) {
-            $this->output->writeln($helper->formatBlock('[OK] There where no errors founds', 'bg=green', true));
-        } else {
-            foreach ($this->errors as $line => $errors) {
-                $this->output->writeln('<comment>['.$line.']</comment> '.$errors['_line']);
-                $errors['_line'] = '';
-                $errors[] = '';
-                $indent = str_repeat(' ', 1 + strlen($line));
-                $this->output->writeln(array_map(function ($error) use ($indent) {
-                    if (!$error) {
-                        return;
-                    }
+        $errorCount = $this->getErrorCount();
 
-                    return $indent.'- <fg=red>'.$error.'</fg=red>';
-                }, $errors));
+        if (0 === $errorCount) {
+            $this->outputBlock('There where no errors founds');
+        } else {
+            foreach ($this->errors as $lineNumber => $errors) {
+                $this->output->writeln('<comment>['.$lineNumber.']</comment> "'.$errors['_line'].'"');
+
+                unset($errors['_line']);
+                $indent = 3 + strlen($lineNumber);
+                $errors = $this->indentErrorMessages($errors, $indent);
+                $this->output->writeln($errors);
+                $this->output->writeln('');
             }
 
-            $this->output->writeln($helper->formatBlock(' [ERROR] '.$count.' errors are found', 'bg=red', true));
+            $this->outputBlock($errorCount.' errors are found', false);
         }
 
         $this->output->writeln('');
@@ -70,5 +71,37 @@ class Console
         }
 
         $this->errors[$lineNumber][] = $params->message;
+    }
+
+    private function outputBlock($message, $success = true)
+    {
+        $color = $success ? 'green' : 'red';
+        $message = ($success ? '[OK]' : '[ERROR]').' '.$message;
+
+        $this->output->writeln($this->formatterHelper->formatBlock($message, 'bg='.$color, true));
+    }
+
+    private function getErrorCount()
+    {
+        return count(array_merge($this->errors));
+    }
+
+    /**
+     * @return array
+     */
+    private function indentErrorMessages(array $errors, $indent)
+    {
+        $indent = str_repeat(' ', $indent);
+
+        return array_map(
+            function ($error) use ($indent) {
+                if (!$error) {
+                    return;
+                }
+
+                return $indent.'- <fg=red>'.$error.'</fg=red>';
+            },
+            $errors
+        );
     }
 }

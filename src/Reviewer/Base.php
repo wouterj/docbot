@@ -18,7 +18,7 @@ abstract class Base implements Reviewer
 
     public function review(Event $event)
     {
-        Editor::map($event->getParams()->file, array($this, 'reviewLine'));
+        $event->getParams()->file->map(array($this, 'reviewLine'));
     }
 
     abstract public function reviewLine($line, $lineNumber, $file);
