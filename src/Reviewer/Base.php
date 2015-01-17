@@ -3,6 +3,8 @@
 namespace Stoffer\Reviewer;
 
 use Stoffer\Editor;
+use Stoffer\Event\ReportError;
+use Stoffer\Event\RequestFileReview;
 use Stoffer\Reviewer;
 use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
@@ -16,22 +18,16 @@ abstract class Base implements Reviewer
     /** @var EventManagerInterface */
     private $eventManager;
 
-    public function review(Event $event)
+    public function review(RequestFileReview $event)
     {
-        $event->getParams()->file->map(array($this, 'reviewLine'));
+        $event->getFile()->map(array($this, 'reviewLine'));
     }
 
     abstract public function reviewLine($line, $lineNumber, $file);
 
-    protected function reportError($message, $line, $fileName, $lineNumber)
+    protected function reportError($message, $line, $filename, $lineNumber)
     {
-        $params = new \stdClass();
-        $params->message = $message;
-        $params->line = $line;
-        $params->lineNumber = $lineNumber;
-        $params->fileName = $fileName;
-
-        $this->getEventManager()->trigger('error_reported', 'reviewer', $params);
+        $this->getEventManager()->trigger(new ReportError($message, $line, $lineNumber, $filename));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Stoffer;
 
+use Stoffer\Event\RequestFileReview;
 use Stoffer\Reviewer;
 use Gnugat\Redaktilo\Text;
 use Zend\EventManager\EventManager;
@@ -43,10 +44,6 @@ class Stoffer
 
     public function lint(Text $file)
     {
-        $params = new \stdClass();
-        $params->file = $file;
-        $params->name = $file->getFilename();
-
-        $this->eventManager->trigger('file_review_requested', 'stoffer', $params);
+        $this->eventManager->trigger(new RequestFileReview($file));
     }
 }

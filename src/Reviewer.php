@@ -2,7 +2,7 @@
 
 namespace Stoffer;
 
-use Zend\EventManager\Event;
+use Stoffer\Event\RequestFileReview;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventsCapableInterface;
 
@@ -13,5 +13,5 @@ use Zend\EventManager\EventsCapableInterface;
  */
 interface Reviewer extends EventsCapableInterface, EventManagerAwareInterface
 {
-    public function review(Event $event);
+    public function review(RequestFileReview $events);
 }

@@ -2,6 +2,8 @@
 
 namespace Stoffer\Reporter;
 
+use Stoffer\Event\ReportError;
+use Stoffer\Event\RequestFileReview;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Output\OutputInterface;
 use Zend\EventManager\Event;
@@ -25,11 +27,11 @@ class Console
         $this->output = $output;
     }
 
-    public function printFileName(Event $event)
+    public function printFileName(RequestFileReview $event)
     {
         $this->errors = array();
 
-        $filename = str_replace(getcwd(), '', $event->getParams()->file->getFilename());
+        $filename = str_replace(getcwd(), '', $event->getFilename());
         $this->output->writeln(array(
             '<fg=blue>',
             $filename,
@@ -38,7 +40,7 @@ class Console
         ));
     }
 
-    public function printReport(Event $event)
+    public function printReport(RequestFileReview $event)
     {
         $errorCount = $this->getErrorCount();
 
@@ -61,16 +63,15 @@ class Console
         $this->output->writeln('');
     }
 
-    public function collectErrors(Event $event)
+    public function collectErrors(ReportError $event)
     {
-        $params = $event->getParams();
-        $lineNumber = $params->lineNumber;
+        $lineNumber = $event->getLineNumber();
 
         if (!isset($this->errors[$lineNumber])) {
-            $this->errors[$lineNumber] = array('_line' => $params->line);
+            $this->errors[$lineNumber] = array('_line' => $event->getLine());
         }
 
-        $this->errors[$lineNumber][] = $params->message;
+        $this->errors[$lineNumber][] = $event->getMessage();
     }
 
     private function outputBlock($message, $success = true)
