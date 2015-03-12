@@ -55,7 +55,7 @@ class TitleCase extends Base
 
             if ($correctTitle !== $titleText) {
                 $this->reportError(
-                    'All words, except from closed-class words, have to be capitalized: "'.$correctTitle.'" (experimental)',
+                    '(experimental) All words, except from closed-class words, have to be capitalized: "'.$correctTitle.'"',
                     $file->getLine($lineNumber - 1),
                     $file,
                     $lineNumber
