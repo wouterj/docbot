@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\ServiceContainer;
+namespace Docbot\ServiceContainer;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class Extension extends Base implements ActsOnCompilation
 {
-    const STOFFER_ID = 'stoffer';
+    const DOCBOT_ID = 'docbot';
     const REVIEWER_TAG = 'reviewer';
     const SHARED_EVENT_MANAGER_ID = 'event_manager';
     const LISTENER_TAG = 'event_listener';
@@ -37,13 +37,13 @@ class Extension extends Base implements ActsOnCompilation
 
     private function loadServices(ContainerBuilder $container)
     {
-        $container->setDefinition(self::STOFFER_ID, new Definition('Stoffer\Stoffer', array(
+        $container->setDefinition(self::DOCBOT_ID, new Definition('Docbot\Docbot', array(
             new Reference(self::SHARED_EVENT_MANAGER_ID),
         )));
 
         $container->register(self::SHARED_EVENT_MANAGER_ID, 'Zend\EventManager\SharedEventManager');
 
-        $container->register('reporter.console', 'Stoffer\Reporter\Console')
+        $container->register('reporter.console', 'Docbot\Reporter\Console')
             ->addArgument('%cli.output%')
             ->addTag(self::LISTENER_TAG, array(
                 'target' => 'reviewer',
@@ -51,13 +51,13 @@ class Extension extends Base implements ActsOnCompilation
                 'method' => 'collectErrors',
             ))
             ->addTag(self::LISTENER_TAG, array(
-                'target' => 'stoffer',
+                'target' => 'docbot',
                 'event' => 'file_review_requested',
                 'method' => 'printFileName',
                 'priority' => 999,
             ))
             ->addTag(self::LISTENER_TAG, array(
-                'target' => 'stoffer',
+                'target' => 'docbot',
                 'event' => 'file_review_requested',
                 'method' => 'printReport',
                 'priority' => -999,
@@ -67,9 +67,9 @@ class Extension extends Base implements ActsOnCompilation
 
     protected function loadCommands(ContainerBuilder $container)
     {
-        $definition = new Definition('Stoffer\Command\lint');
+        $definition = new Definition('Docbot\Command\lint');
         $definition->addTag(self::COMMAND_TAG);
-        $container->setDefinition('stoffer.command.lint', $definition);
+        $container->setDefinition('command.lint', $definition);
     }
 
     protected function loadReviewers(ContainerBuilder $container, array $types)
@@ -81,24 +81,24 @@ class Extension extends Base implements ActsOnCompilation
 
     protected function loadSymfonyReviewers(ContainerBuilder $container)
     {
-        $container->register('reviewer.unstyled_admonitions', 'Stoffer\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.shortphp_syntax', 'Stoffer\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.unstyled_admonitions', 'Docbot\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.shortphp_syntax', 'Docbot\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
     }
 
     protected function loadDocReviewers(ContainerBuilder $container)
     {
-        $container->register('reviewer.title_case', 'Stoffer\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.first_person', 'Stoffer\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_level', 'Stoffer\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.line_length', 'Stoffer\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_case', 'Docbot\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.first_person', 'Docbot\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_level', 'Docbot\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.line_length', 'Docbot\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
     }
 
     protected function loadRstReviewers(ContainerBuilder $container)
     {
-        $container->register('reviewer.trailing_whitespace', 'Stoffer\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.faulty_literals', 'Stoffer\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.directive_whitespace', 'Stoffer\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_underline', 'Stoffer\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.trailing_whitespace', 'Docbot\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.faulty_literals', 'Docbot\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.directive_whitespace', 'Docbot\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.title_underline', 'Docbot\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
     }
 
     /**
@@ -146,7 +146,7 @@ class Extension extends Base implements ActsOnCompilation
 
     private function registerReviewers(ContainerBuilder $container)
     {
-        $definition = $container->getDefinition(self::STOFFER_ID);
+        $definition = $container->getDefinition(self::DOCBOT_ID);
 
         $reviewers = $container->findTaggedServiceIds(self::REVIEWER_TAG);
         foreach ($reviewers as $id => $tags) {
@@ -156,6 +156,6 @@ class Extension extends Base implements ActsOnCompilation
 
     public function getAlias()
     {
-        return 'stoffer';
+        return 'docbot';
     }
 }

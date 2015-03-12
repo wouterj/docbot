@@ -2,6 +2,6 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-$app = new \Stoffer\Application();
+$app = new \Docbot\Application();
 
 $app->run();

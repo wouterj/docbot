@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\Reviewer;
+namespace Docbot\Reviewer;
 
 class ShortPhpSyntax extends Base
 {

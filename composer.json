@@ -1,5 +1,5 @@
 {
-    "name": "wouterj/stoffer",
+    "name": "wouterj/docbot",
     "description": "A linter tool for documentations.",
     "license": "BSD",
 
@@ -16,7 +16,7 @@
     },
 
     "autoload": {
-        "psr-4": {"Stoffer\\": "src"}
+        "psr-4": {"Docbot\\": "src"}
     },
     "autoload-dev": {
         "psr-0": {"spec\\": "."}

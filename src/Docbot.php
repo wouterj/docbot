@@ -1,9 +1,9 @@
 <?php
 
-namespace Stoffer;
+namespace Docbot;
 
-use Stoffer\Event\RequestFileReview;
-use Stoffer\Reviewer;
+use Docbot\Event\RequestFileReview;
+use Docbot\Reviewer;
 use Gnugat\Redaktilo\Text;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
@@ -15,7 +15,7 @@ use Zend\EventManager\SharedEventManagerInterface;
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class Stoffer
+class Docbot
 {
     /** @var EventManagerInterface */
     private $eventManager;
@@ -23,7 +23,7 @@ class Stoffer
     public function __construct(SharedEventManagerInterface $eventManager = null)
     {
         $this->eventManager = new EventManager();
-        $this->eventManager->setIdentifiers(array('stoffer'));
+        $this->eventManager->setIdentifiers(array('docbot'));
 
         $this->eventManager->setSharedManager($eventManager ?: new SharedEventManager());
     }

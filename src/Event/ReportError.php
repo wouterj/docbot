@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\Event;
+namespace Docbot\Event;
 
 use Zend\EventManager\Event;
 

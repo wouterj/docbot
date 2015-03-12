@@ -1,4 +1,4 @@
 suites:
     main:
-        namespace: Stoffer
-        psr4_prefix: Stoffer
+        namespace: Docbot
+        psr4_prefix: Docbot

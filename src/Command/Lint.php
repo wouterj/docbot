@@ -1,7 +1,8 @@
 <?php
 
-namespace Stoffer\Command;
+namespace Docbot\Command;
 
+use Docbot\ServiceContainer\Extension as DocbotExtension;
 use Gnugat\Redaktilo\EditorFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -48,7 +49,7 @@ class Lint extends Command
             $path = $path->getPathname();
         }
 
-        $this->getContainer()->get('stoffer')->lint(EditorFactory::createEditor()->open($path));
+        $this->getContainer()->get(DocbotExtension::DOCBOT_ID)->lint(EditorFactory::createEditor()->open($path));
     }
 
     private function lintDirectory($path, $ignore = null)

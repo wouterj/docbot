@@ -1,11 +1,11 @@
 <?php
 
-namespace Stoffer\Reviewer;
+namespace Docbot\Reviewer;
 
-use Stoffer\Editor;
-use Stoffer\Event\ReportError;
-use Stoffer\Event\RequestFileReview;
-use Stoffer\Reviewer;
+use Docbot\Editor;
+use Docbot\Event\ReportError;
+use Docbot\Event\RequestFileReview;
+use Docbot\Reviewer;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 

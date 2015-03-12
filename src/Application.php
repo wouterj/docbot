@@ -1,17 +1,26 @@
 <?php
 
-namespace Stoffer;
+/*
+ * This file is part of the Docbot package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
-use Stoffer\ServiceContainer\CliExtension;
-use Stoffer\ServiceContainer\ContainerFactory;
-use Stoffer\ServiceContainer\ExtensionNameResolver;
+namespace Docbot;
+
+use Docbot\ServiceContainer\CliExtension;
+use Docbot\ServiceContainer\ContainerFactory;
+use Docbot\ServiceContainer\ExtensionNameResolver;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * The CLI application Stoffer.
+ * The CLI application of DocBot.
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
@@ -23,7 +32,7 @@ class Application extends BaseApplication
 
     public function __construct()
     {
-        parent::__construct('Stoffer', '1.0-dev');
+        parent::__construct('Docbot', '1.0-dev');
     }
 
     public function getContainer()
@@ -47,7 +56,7 @@ class Application extends BaseApplication
                 'e',
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
                 'The extensions to enable',
-                array('StofferCore')
+                array('DocbotCore')
             )
         );
         $definition->addOption(
@@ -96,7 +105,7 @@ class Application extends BaseApplication
 
         $factory->addExtension(new CliExtension($input, $output));
 
-        $factory->addConfigFor('stoffer', array(
+        $factory->addConfigFor('docbot', array(
             'reviewers' => array(
                 'types' => array_map('trim', explode(',', $input->getParameterOption(array('--types', '-t'), 'rst, doc, symfony'))),
             ),

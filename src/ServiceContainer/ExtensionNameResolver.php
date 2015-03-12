@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\ServiceContainer;
+namespace Docbot\ServiceContainer;
 
 /**
  * @author Wouter J <wouter@wouterj.nl>
@@ -14,7 +14,7 @@ class ExtensionNameResolver
         } elseif ($this->nameIsShortCut($name)) {
             $class = $this->getClassNameFromShortcut($name);
         } elseif ($this->nameIsCoreExtension($name)) {
-            $class = 'Stoffer\ServiceContainer\Extension';
+            $class = 'Docbot\ServiceContainer\Extension';
         } else {
             throw new \InvalidArgumentException(sprintf('Cannot find the class for extension name "%s".', $name));
         }

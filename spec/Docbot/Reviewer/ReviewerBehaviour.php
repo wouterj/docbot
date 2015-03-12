@@ -1,6 +1,6 @@
 <?php
 
-namespace spec\Stoffer\Reviewer;
+namespace spec\Docbot\Reviewer;
 
 use PhpSpec\ObjectBehavior;
 use Zend\EventManager\EventManagerInterface;

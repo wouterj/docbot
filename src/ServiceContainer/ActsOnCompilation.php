@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\ServiceContainer;
+namespace Docbot\ServiceContainer;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 

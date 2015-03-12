@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\Reviewer;
+namespace Docbot\Reviewer;
 
 /**
  * @author Wouter J <wouter@wouterj.nl>

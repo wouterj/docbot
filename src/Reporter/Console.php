@@ -1,9 +1,9 @@
 <?php
 
-namespace Stoffer\Reporter;
+namespace Docbot\Reporter;
 
-use Stoffer\Event\ReportError;
-use Stoffer\Event\RequestFileReview;
+use Docbot\Event\ReportError;
+use Docbot\Event\RequestFileReview;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Output\OutputInterface;
 

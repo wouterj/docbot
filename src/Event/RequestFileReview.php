@@ -1,6 +1,6 @@
 <?php
 
-namespace Stoffer\Event;
+namespace Docbot\Event;
 
 use Gnugat\Redaktilo\File;
 use Zend\EventManager\Event;
@@ -19,7 +19,7 @@ class RequestFileReview extends Event
     {
         $this->file = $file;
 
-        parent::__construct(self::EVENT, 'stoffer');
+        parent::__construct(self::EVENT, 'docbot');
     }
 
     public function getFile()

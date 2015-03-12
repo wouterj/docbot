@@ -1,8 +1,8 @@
 <?php
 
-namespace Stoffer\ServiceContainer;
+namespace Docbot\ServiceContainer;
 
-use Stoffer\ServiceContainer\Compiler\InlineCompilePass;
+use Docbot\ServiceContainer\Compiler\InlineCompilePass;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
  */
 class ContainerFactory
 {
-    private $extensions = array('Stoffer\ServiceContainer\Extension');
+    private $extensions = array('Docbot\ServiceContainer\Extension');
     private $passes = array();
     private $config = array();
 

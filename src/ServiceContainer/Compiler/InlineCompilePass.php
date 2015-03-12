@@ -1,8 +1,8 @@
 <?php
 
-namespace Stoffer\ServiceContainer\Compiler;
+namespace Docbot\ServiceContainer\Compiler;
 
-use Stoffer\ServiceContainer\ActsOnCompilation;
+use Docbot\ServiceContainer\ActsOnCompilation;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 

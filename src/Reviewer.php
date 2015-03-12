@@ -1,8 +1,8 @@
 <?php
 
-namespace Stoffer;
+namespace Docbot;
 
-use Stoffer\Event\RequestFileReview;
+use Docbot\Event\RequestFileReview;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventsCapableInterface;
 
