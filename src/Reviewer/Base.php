@@ -6,7 +6,6 @@ use Stoffer\Editor;
 use Stoffer\Event\ReportError;
 use Stoffer\Event\RequestFileReview;
 use Stoffer\Reviewer;
-use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 

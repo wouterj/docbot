@@ -2,9 +2,6 @@
 
 namespace Stoffer\Reviewer;
 
-use Stoffer\Editor;
-use Zend\EventManager\Event;
-
 /**
  * @author Wouter J <wouter@wouterj.nl>
  */

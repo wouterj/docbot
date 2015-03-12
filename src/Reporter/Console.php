@@ -6,8 +6,6 @@ use Stoffer\Event\ReportError;
 use Stoffer\Event\RequestFileReview;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Output\OutputInterface;
-use Zend\EventManager\Event;
-use Zend\Stdlib\Request;
 
 /**
  * An output printer that prints into the console.

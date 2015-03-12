@@ -2,9 +2,6 @@
 
 namespace Stoffer\Reviewer;
 
-use Stoffer\Editor;
-use Zend\EventManager\Event;
-
 class TitleCase extends Base
 {
     static protected $closedClassWords = array(

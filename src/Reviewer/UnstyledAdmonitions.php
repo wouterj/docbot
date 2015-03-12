@@ -2,9 +2,6 @@
 
 namespace Stoffer\Reviewer;
 
-use Stoffer\Editor;
-use Zend\EventManager\Event;
-
 class UnstyledAdmonitions extends Base
 {
     static protected $unStyledAdmonitions = array('attention', 'danger', 'error', 'hint', 'important', 'warning', 'topic');

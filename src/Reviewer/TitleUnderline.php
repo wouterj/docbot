@@ -2,9 +2,6 @@
 
 namespace Stoffer\Reviewer;
 
-use Stoffer\Editor;
-use Zend\EventManager\Event;
-
 class TitleUnderline extends Base
 {
     public function reviewLine($line, $lineNumber, $file)

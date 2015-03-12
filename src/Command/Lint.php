@@ -3,9 +3,6 @@
 namespace Stoffer\Command;
 
 use Gnugat\Redaktilo\EditorFactory;
-use \Stoffer\Reporter\Console;
-use \Stoffer\Reviewer\LineLength;
-use \Stoffer\Stoffer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;

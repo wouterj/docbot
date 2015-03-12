@@ -2,9 +2,6 @@
 
 namespace Stoffer\Reviewer;
 
-use Stoffer\Editor;
-use Zend\EventManager\Event;
-
 class TrailingWhitespace extends Base
 {
     public function reviewLine($line, $lineNumber, $file)
