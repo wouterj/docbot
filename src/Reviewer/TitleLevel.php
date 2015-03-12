@@ -22,7 +22,7 @@ class TitleLevel extends Base
 
             if (false === $level) {
                 $this->reportError(
-                    'Only =, -, ~, . and " should be used as title underlines', $line, $lineNumber + 1,
+                    'Only =, -, ~, . and " should be used as title underlines',
                     $line,
                     $file,
                     $lineNumber + 1

@@ -11,8 +11,8 @@ class Reviewer
 {
     public static function shouldReportError($eventManager, $message, $lineNumber)
     {
-        $eventManager->trigger('error_reported', 'reviewer', Argument::that(function ($event) use ($message, $lineNumber) {
-            return $event->message === $message && $event->lineNumber === $lineNumber;
+        $eventManager->trigger(Argument::that(function ($event) use ($message, $lineNumber) {
+            return $event->getName() === 'error_reported' && $event->getTarget() === 'reviewer' && $event->getMessage() === $message && $event->getLineNumber() === $lineNumber;
         }))->shouldBeCalled();
     }
 
@@ -20,4 +20,4 @@ class Reviewer
     {
         $eventManager->trigger('error_reported', 'reviewer', Argument::any())->shouldNotBeCalled();
     }
-} 
+}
