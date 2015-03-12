@@ -29,6 +29,7 @@ class Lint extends Command
             ->setDescription('Reports any problems found in the given files')
             ->addArgument('path', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'One file, list of files or a directory')
             ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Where to put the output', 'cli')
+            ->addOption('ignore', 'i', InputOption::VALUE_REQUIRED, 'Pattern to ignore files')
         ;
     }
 
@@ -39,7 +40,7 @@ class Lint extends Command
             if (is_file($path)) {
                 $this->lintFile($path);
             } else {
-                $this->lintDirectory($path);
+                $this->lintDirectory($path, $input->getOption('ignore'));
             }
         }
     }
@@ -53,9 +54,14 @@ class Lint extends Command
         $this->getContainer()->get('stoffer')->lint(EditorFactory::createEditor()->open($path));
     }
 
-    private function lintDirectory($path)
+    private function lintDirectory($path, $ignore = null)
     {
-        foreach (Finder::create()->files()->in($path) as $file) {
+        $files = Finder::create()->files()->in($path);
+        if (null !== $ignore) {
+            $files->notName($ignore);
+        }
+
+        foreach ($files as $file) {
             $this->lintFile($file);
         }
     }
