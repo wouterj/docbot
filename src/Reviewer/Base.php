@@ -16,17 +16,36 @@ abstract class Base implements Reviewer
 {
     /** @var EventManagerInterface */
     private $eventManager;
+    private $file;
+    private $line;
+    private $lineNumber;
 
     public function review(RequestFileReview $event)
     {
-        $event->getFile()->map(array($this, 'reviewLine'));
+        $event->getFile()->map(array($this, 'doReviewLine'));
+    }
+
+    public function doReviewLine($line, $lineNumber, $file)
+    {
+        if ($file !== $this->file) {
+            $this->file = $file;
+        }
+        $this->line = $line;
+        $this->lineNumber = $lineNumber + 1;
+
+        return $this->reviewLine($line, $lineNumber, $file);
     }
 
     abstract public function reviewLine($line, $lineNumber, $file);
 
-    protected function reportError($message, $line, $filename, $lineNumber)
+    protected function reportError($message, $lineNumber = null, $line = null)
     {
-        $this->getEventManager()->trigger(new ReportError($message, $line, $lineNumber, $filename));
+        $this->getEventManager()->trigger(new ReportError(
+            $message,
+            $line ?: $this->line,
+            $lineNumber ?: $this->lineNumber,
+            $this->file
+        ));
     }
 
     /**

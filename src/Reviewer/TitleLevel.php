@@ -26,12 +26,7 @@ class TitleLevel extends Base
             $level = array_search($character, $this->levels);
 
             if (false === $level) {
-                $this->reportError(
-                    'Only =, -, ~, . and " should be used as title underlines',
-                    $line,
-                    $file,
-                    $lineNumber + 1
-                );
+                $this->reportError('Only =, -, ~, . and " should be used as title underlines');
 
                 return;
             }
@@ -43,12 +38,10 @@ class TitleLevel extends Base
             }
 
             if ($this->currentLevel + 1 !== $level) {
-                $this->reportError(
-                    'The "'.$this->levels[$this->currentLevel + 1].'" character should be used for a title level '.($this->currentLevel + 1),
-                    $line,
-                    $file,
-                    $lineNumber + 1
-                );
+                $this->reportError(sprintf(
+                    'The "%s" character should be used for a title level %s',
+                    $this->levels[$this->currentLevel + 1], $this->currentLevel + 1
+                ));
             } else {
                 $this->currentLevel = $level;
             }

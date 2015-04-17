@@ -28,12 +28,7 @@ class LineLength extends Base
 
             if (preg_match('/^\s{'.$this->inCodeBlock.'}/', $line)) {
                 if (strlen(trim($line)) > 85) {
-                    $this->reportError(
-                        'In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit',
-                        $line,
-                        $file,
-                        $lineNumber + 1
-                    );
+                    $this->reportError('In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit');
                 }
 
                 return;
@@ -47,12 +42,7 @@ class LineLength extends Base
         }
 
         if (false !== strpos(substr(rtrim($line), 71), ' ')) {
-            $this->reportError(
-                'A line should be wrapped after the first word that crosses the 72th character',
-                $line,
-                $file,
-                $lineNumber + 1
-            );
+            $this->reportError('A line should be wrapped after the first word that crosses the 72th character');
         }
     }
 }

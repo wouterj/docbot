@@ -24,12 +24,7 @@ class ShortPhpSyntax extends Base
             }
 
             if (preg_match('/:$/', rtrim($lineBefore))) {
-                $this->reportError(
-                    'The short syntax for PHP code (::) should be used here',
-                    $line,
-                    $file,
-                    $lineNumber + 1
-                );
+                $this->reportError('The short syntax for PHP code (::) should be used here');
             }
         }
     }

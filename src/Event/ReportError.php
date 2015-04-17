@@ -16,14 +16,14 @@ class ReportError extends Event
     private $message;
     private $line;
     private $lineNumber;
-    private $filename;
+    private $file;
 
-    public function __construct($message, $line, $lineNumber, $filename)
+    public function __construct($message, $line, $lineNumber, $file)
     {
         $this->message = $message;
         $this->line = $line;
         $this->lineNumber = $lineNumber;
-        $this->filename = $filename;
+        $this->file = $file;
 
         parent::__construct(self::EVENT, 'reviewer');
     }
@@ -43,8 +43,8 @@ class ReportError extends Event
         return $this->lineNumber;
     }
 
-    public function getFilename()
+    public function getFile()
     {
-        return $this->filename;
+        return $this->file;
     }
 }

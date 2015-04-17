@@ -21,8 +21,6 @@ class DirectiveWhitespace extends Base
                 if (trim($nextLine) === '') {
                     $this->reportError(
                         'There should be no empty line between the start of a versionadded directive and the body',
-                        $line,
-                        $file,
                         $lineNumber + 3
                     );
                 }
@@ -37,8 +35,6 @@ class DirectiveWhitespace extends Base
             if (trim($nextLine) !== '') {
                 $this->reportError(
                     'There should be an empty line between the body and the start of a directive (except from versionadded directives)',
-                    $line,
-                    $file,
                     $lineNumber + 2
                 );
             }

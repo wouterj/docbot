@@ -18,19 +18,9 @@ class TrailingWhitespace extends Base
         }
 
         if (rtrim($line) !== $line) {
-            $this->reportError(
-                'There should be no trailing whitespace at the end of a line',
-                $line,
-                $file,
-                $lineNumber + 1
-            );
+            $this->reportError('There should be no trailing whitespace at the end of a line');
         } elseif (preg_match('/[\w.]\s{2,}\w/', $line)) {
-            $this->reportError(
-                'This line contains successive whitespaces',
-                $line,
-                $file,
-                $lineNumber + 1
-            );
+            $this->reportError('This line contains successive whitespaces');
         }
     }
 }

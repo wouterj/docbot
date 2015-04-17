@@ -16,10 +16,7 @@ class FaultyLiterals extends Base
     {
         if (preg_match('/\s`([^`]+)`[^_]/', $line, $matches)) {
             $this->reportError(
-                'Found unrecognized usage of backticks. Did you mean to create a link (`'.$matches[1].'`_) or a literal (``'.$matches[1].'``)?',
-                $line,
-                $file,
-                $lineNumber + 1
+                'Found unrecognized usage of backticks. Did you mean to create a link (`'.$matches[1].'`_) or a literal (``'.$matches[1].'``)?'
             );
         }
     }
