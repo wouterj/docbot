@@ -2,6 +2,14 @@
 
 namespace Docbot\Reviewer;
 
+/**
+ * A reviewer checking the title case (very experimental).
+ *
+ *  * All words in the title SHOULD be capitialized;
+ *  * Except from closed-class words, which SHOULD be lowercased.
+ *
+ * @author Wouter J <wouter@wouterj.nl>
+ */
 class TitleCase extends Base
 {
     static protected $closedClassWords = array(
@@ -19,7 +27,7 @@ class TitleCase extends Base
 
     public function reviewLine($line, $lineNumber, $file)
     {
-        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{2,}/', $line)) {
+        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line)) {
             $titleText = trim($file->getLine($lineNumber - 1));
 
             $words = explode(' ', $titleText);

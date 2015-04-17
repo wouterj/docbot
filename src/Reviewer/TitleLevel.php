@@ -2,6 +2,11 @@
 
 namespace Docbot\Reviewer;
 
+/**
+ * A reviewer checking the correct title level usages.
+ *
+ * @author Wouter J <wouter@wouterj.nl>
+ */
 class TitleLevel extends Base
 {
     private $levels = array(
@@ -15,7 +20,7 @@ class TitleLevel extends Base
 
     public function reviewLine($line, $lineNumber, $file)
     {
-        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{2,}/', $line, $data)) {
+        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line, $data)) {
             $character = $data[1];
 
             $level = array_search($character, $this->levels);

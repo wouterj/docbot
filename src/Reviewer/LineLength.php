@@ -3,6 +3,11 @@
 namespace Docbot\Reviewer;
 
 /**
+ * A reviewer checking the line length.
+ *
+ *  * There SHOULDN'T be a new word after the 72 character;
+ *  * There SHOULDN'T be code after the 85 character.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class LineLength extends Base

@@ -2,6 +2,14 @@
 
 namespace Docbot\Reviewer;
 
+/**
+ * A reviewer that fixes required whitespaces on directives.
+ *
+ *  * There SHOULD be a blank line between the directive start and the directive body;
+ *  * Except from the versionadded directive, in which case there MUST NOT be a blank line.
+ *
+ * @author Wouter J <wouter@wouterj.nl>
+ */
 class DirectiveWhitespace extends Base
 {
     public function reviewLine($line, $lineNumber, $file)

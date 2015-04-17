@@ -2,7 +2,6 @@
 
 namespace Docbot\ServiceContainer\Compiler;
 
-use Docbot\ServiceContainer\ActsOnCompilation;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -17,11 +16,11 @@ class InlineCompilePass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         foreach ($container->getExtensions() as $extension) {
-            if (!$extension instanceof ActsOnCompilation) {
+            if (!$extension instanceof CompilerPassInterface) {
                 continue;
             }
 
-            $extension->compile($container);
+            $extension->process($container);
         }
     }
 }

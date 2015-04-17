@@ -6,6 +6,8 @@ use Gnugat\Redaktilo\File;
 use Zend\EventManager\Event;
 
 /**
+ * An event that is triggered when a file should be reviewed.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class RequestFileReview extends Event

@@ -2,6 +2,7 @@
 
 namespace Docbot\ServiceContainer;
 
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension as Base;
@@ -12,7 +13,7 @@ use Symfony\Component\DependencyInjection\Reference;
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class Extension extends Base implements ActsOnCompilation
+class Extension extends Base implements CompilerPassInterface
 {
     const DOCBOT_ID = 'docbot';
     const REVIEWER_TAG = 'reviewer';
@@ -91,6 +92,7 @@ class Extension extends Base implements ActsOnCompilation
         $container->register('reviewer.first_person', 'Docbot\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.title_level', 'Docbot\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
         $container->register('reviewer.line_length', 'Docbot\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
+        $container->register('reviewer.serial_comma', 'Docbot\Reviewer\SerialComma')->addTag(self::REVIEWER_TAG);
     }
 
     protected function loadRstReviewers(ContainerBuilder $container)
@@ -104,7 +106,7 @@ class Extension extends Base implements ActsOnCompilation
     /**
      * {@inheritDocs}
      */
-    public function compile(ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $this->registerCommands($container);
         $this->registerReviewers($container);

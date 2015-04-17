@@ -5,6 +5,8 @@ namespace Docbot\Event;
 use Zend\EventManager\Event;
 
 /**
+ * An event that's triggered when a reviewer found an error.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class ReportError extends Event

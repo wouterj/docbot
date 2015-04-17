@@ -16,7 +16,7 @@ class TitleUnderlineSpec extends ReviewerBehaviour
     {
         PromiseThatEvent::willHaveFile($event, Text::fromArray(array(
             'A title',
-            '===',
+            '====',
         )));
 
         PredictThatReviewer::shouldReportError($eventManager, 'The underline of a title should have exact the same length as the text of the title', 2);

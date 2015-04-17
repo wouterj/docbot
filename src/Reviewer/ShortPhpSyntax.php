@@ -2,6 +2,13 @@
 
 namespace Docbot\Reviewer;
 
+/**
+ * A reviewer checking for long PHP syntax, where short should be used.
+ *
+ *  * The short syntax (::) SHOULD be used instead of the long syntax (.. code-block:: php).
+ *
+ * @author Wouter J <wouter@wouterj.nl>
+ */
 class ShortPhpSyntax extends Base
 {
     public function reviewLine($line, $lineNumber, $file)

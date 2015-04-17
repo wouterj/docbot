@@ -49,7 +49,7 @@ class ExtensionNameResolver
 
     private function nameIsCoreExtension($name)
     {
-        return 'StofferCore' === $name;
+        return 'DocbotCore' === $name;
     }
 
     /**

@@ -2,6 +2,13 @@
 
 namespace Docbot\Reviewer;
 
+/**
+ * A reviewer checking for directives with no style on symfony.com
+ *
+ *  * Not-styled directives SHOULD be avoided.
+ *
+ * @author Wouter J <wouter@wouterj.nl>
+ */
 class UnstyledAdmonitions extends Base
 {
     static protected $unStyledAdmonitions = array('attention', 'danger', 'error', 'hint', 'important', 'warning', 'topic');

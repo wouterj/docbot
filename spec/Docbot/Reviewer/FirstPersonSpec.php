@@ -5,7 +5,6 @@ namespace spec\Docbot\Reviewer;
 use Docbot\Event\RequestFileReview;
 use Gnugat\Redaktilo\Text;
 use Prophecy\Argument;
-use Zend\EventManager\Event;
 use Zend\EventManager\EventManagerInterface;
 use spec\helpers\Promise\FileReviewEvent as PromiseThatEvent;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;

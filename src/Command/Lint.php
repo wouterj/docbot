@@ -12,6 +12,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
 
 /**
+ * This commands lints documentation files.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class Lint extends Command
