@@ -3,7 +3,6 @@ language: php
 php:
   - 5.6
 
-before_script:
-  - composer update
+install: composer update
 
-script: "vendor/bin/phpspec" run
+script: ./vendor/bin/phpspec run
