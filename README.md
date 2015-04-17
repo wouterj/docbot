@@ -5,7 +5,7 @@ Welcome to DocBot! This bot will lint your documentation files according to the
 
 ## Install
 
-    $ composer require -g wouterj/docbot
+    $ composer global require wouterj/docbot
 
 ## Lint
 
