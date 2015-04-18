@@ -12,7 +12,8 @@
         "symfony/config": "~2.3"
     },
     "require-dev": {
-        "phpspec/phpspec": "2.1.*"
+        "phpspec/phpspec": "2.1.*",
+        "phpspec/prophecy": "1.3.*"
     },
 
     "bin": ["bin/docbot"],
