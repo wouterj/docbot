@@ -19,61 +19,59 @@ class Extension extends Base implements CompilerPassInterface
 {
     const DOCBOT_ID = 'docbot';
     const VALIDATOR_ID = 'validator';
-    const REVIEWER_TAG = 'reviewer';
     const COMMAND_TAG = 'command';
 
-    /**
-     * {@inheritDocs}
-     */
+    /** {@inheritdoc} */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = call_user_func_array('array_merge_recursive', array_merge(
-            array('reviewers' => array('types' => array())),
-            $config
-        ));
-
         $this->loadServices($container);
+        $this->loadValidator($container);
+        $this->loadReporters($container);
         $this->loadCommands($container);
     }
 
     private function loadServices(ContainerBuilder $container)
     {
-        $container->setDefinition(self::DOCBOT_ID, new Definition('Docbot\Docbot', array(
-            new Reference(self::VALIDATOR_ID),
-        )));
+        $definition = new Definition('Docbot\Docbot', array(new Reference(self::VALIDATOR_ID)));
+        $container->setDefinition(self::DOCBOT_ID, $definition);
+    }
 
+    private function loadValidator(ContainerBuilder $container)
+    {
         $container->register('validator.metadata_factory', 'Docbot\Validator\MetadataFactory');
 
         $definition = new Definition('Symfony\Component\Validator\ValidatorBuilder');
-        $definition->setFactory(array('Symfony\Component\Validator\Validation', 'createValidatorBuilder'));
-        $definition->addMethodCall('setMetadataFactory', array(new Reference('validator.metadata_factory')));
-        $definition->addMethodCall('setApiVersion', array(Validation::API_VERSION_2_5));
+        $definition
+            ->setFactory(array('Symfony\Component\Validator\Validation', 'createValidatorBuilder'))
+            ->addMethodCall('setMetadataFactory', array(new Reference('validator.metadata_factory')))
+            ->addMethodCall('setApiVersion', array(Validation::API_VERSION_2_5))
+        ;
         $container->setDefinition('validator.builder', $definition);
 
         $definition = new Definition('Symfony\Component\Validator\Validator');
         $definition->setFactory(array(new Reference('validator.builder'), 'getValidator'));
         $container->setDefinition(self::VALIDATOR_ID, $definition);
+    }
 
+    private function loadReporters(ContainerBuilder $container)
+    {
         $definition = new Definition('Docbot\Reporter\Console', array(new Reference(CliExtension::OUTPUT_ID)));
         $container->setDefinition('reporter.console', $definition);
 
         $container->setAlias('reporter', new Alias('reporter.console'));
     }
 
-    protected function loadCommands(ContainerBuilder $container)
+    private function loadCommands(ContainerBuilder $container)
     {
         $definition = new Definition('Docbot\Command\lint');
         $definition->addTag(self::COMMAND_TAG);
         $container->setDefinition('command.lint', $definition);
     }
 
-    /**
-     * {@inheritDocs}
-     */
+    /** {@inheritdoc} */
     public function process(ContainerBuilder $container)
     {
         $this->registerCommands($container);
-        $this->registerReviewers($container);
     }
 
     private function registerCommands(ContainerBuilder $container)
@@ -90,16 +88,6 @@ class Extension extends Base implements CompilerPassInterface
         }
 
         $container->setParameter('console.commands', $commands);
-    }
-
-    private function registerReviewers(ContainerBuilder $container)
-    {
-        $definition = $container->getDefinition(self::DOCBOT_ID);
-
-        $reviewers = $container->findTaggedServiceIds(self::REVIEWER_TAG);
-        foreach ($reviewers as $id => $tags) {
-            $definition->addMethodCall('addReviewer', array(new Reference($id)));
-        }
     }
 
     public function getAlias()

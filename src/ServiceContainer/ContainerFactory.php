@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 /**
+ * Creates the container including all core services.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class ContainerFactory
@@ -26,15 +28,6 @@ class ContainerFactory
         $this->extensions[] = $extension;
     }
 
-    public function addConfigFor($name, array $config)
-    {
-        if (!isset($this->config[$name])) {
-            $this->config[$name] = array();
-        }
-
-        $this->config[$name] = array_merge($this->config[$name], $config);
-    }
-
     public function createContainer()
     {
         $container = new ContainerBuilder();
@@ -45,6 +38,7 @@ class ContainerFactory
             }
 
             $container->registerExtension($extension);
+            // make sure extension is loaded
             $container->loadFromExtension($extension->getAlias(), array());
         }
 
@@ -53,10 +47,6 @@ class ContainerFactory
         }
 
         $container->addCompilerPass(new InlineCompilePass());
-
-        foreach ($this->config as $name => $config) {
-            $container->loadFromExtension($name, $config);
-        }
 
         $container->compile();
 

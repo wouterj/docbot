@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 
 /**
+ * A special extension taking care of console input/output services.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class CliExtension extends Extension

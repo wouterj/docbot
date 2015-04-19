@@ -7,6 +7,8 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
 
 /**
+ * A special MetadataFactory, providing all reviewer constraints.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class MetadataFactory implements MetadataFactoryInterface
@@ -23,14 +25,14 @@ class MetadataFactory implements MetadataFactoryInterface
         return $metadata;
     }
 
-    protected function registerChecks(ClassMetadata $metadata, array $checks, $groupName)
+    private function registerChecks(ClassMetadata $metadata, array $checks, $groupName)
     {
         foreach ($checks as $check) {
             $metadata->addConstraint(new $check(array('groups' => $groupName)));
         }
     }
 
-    protected function getSymfonyChecks()
+    private function getSymfonyChecks()
     {
         return array(
             'Docbot\Reviewer\Check\UnstyledAdmonitions',
@@ -38,7 +40,7 @@ class MetadataFactory implements MetadataFactoryInterface
         );
     }
 
-    protected function getDocChecks()
+    private function getDocChecks()
     {
         return array(
             'Docbot\Reviewer\Check\TitleCase',
@@ -49,7 +51,7 @@ class MetadataFactory implements MetadataFactoryInterface
         );
     }
 
-    protected function getRstChecks()
+    private function getRstChecks()
     {
         return array(
             'Docbot\Reviewer\Check\TrailingWhitespace',

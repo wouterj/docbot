@@ -13,7 +13,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
- * An output printer that prints into the console.
+ * A reporter that prints into the console.
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
@@ -87,14 +87,12 @@ class Console implements Reporter
     private function printFilename(File $file)
     {
         $filename = str_replace(getcwd(), '', $file->getFilename());
-        $this->output->writeln(
-            array(
-                '<fg=blue>',
-                $filename,
-                str_repeat('=', strlen($filename)).'</>',
-            )
-        )
-        ;
+
+        $this->output->writeln(array(
+            '<fg=blue>',
+            $filename,
+            str_repeat('=', strlen($filename)).'</>',
+        ));
     }
 
     private function printLine(Text $file, $lineNumber)
