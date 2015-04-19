@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer checking for trailing whitespaces.
  *
@@ -11,16 +13,16 @@ namespace Docbot\Reviewer;
  */
 class TrailingWhitespace extends Base
 {
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (0 === strlen($line)) {
             return;
         }
 
         if (rtrim($line) !== $line) {
-            $this->reportError('There should be no trailing whitespace at the end of a line');
+            $this->addError('There should be no trailing whitespace at the end of a line');
         } elseif (preg_match('/[\w.]\s{2,}\w/', $line)) {
-            $this->reportError('This line contains successive whitespaces');
+            $this->addError('This line contains successive whitespaces');
         }
     }
 }

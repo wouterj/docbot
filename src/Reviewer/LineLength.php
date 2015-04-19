@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer checking the line length.
  *
@@ -14,7 +16,7 @@ class LineLength extends Base
 {
     private $inCodeBlock = false;
 
-    public function reviewLine($line, $lineNumber, $file) {
+    public function reviewLine($line, $lineNumber, Text $file) {
         if (false !== strpos($line, '.. code-block::') || ('..' !== substr($line, 0, 2) && '::' === substr(rtrim($line), -2))) {
             $this->inCodeBlock = strlen($line) - strlen(ltrim($line)) + 4;
 
@@ -28,7 +30,7 @@ class LineLength extends Base
 
             if (preg_match('/^\s{'.$this->inCodeBlock.'}/', $line)) {
                 if (strlen(trim($line)) > 85) {
-                    $this->reportError('In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit');
+                    $this->addError('In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit');
                 }
 
                 return;
@@ -42,7 +44,7 @@ class LineLength extends Base
         }
 
         if (false !== strpos(substr(rtrim($line), 71), ' ')) {
-            $this->reportError('A line should be wrapped after the first word that crosses the 72th character');
+            $this->addError('A line should be wrapped after the first word that crosses the 72th character');
         }
     }
 }

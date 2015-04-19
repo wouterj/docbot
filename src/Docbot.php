@@ -2,13 +2,10 @@
 
 namespace Docbot;
 
-use Docbot\Event\RequestFileReview;
-use Docbot\Reviewer;
+use Docbot\Reviewer\Check;
 use Gnugat\Redaktilo\Text;
-use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
-use Zend\EventManager\SharedEventManager;
-use Zend\EventManager\SharedEventManagerInterface;
+use Symfony\Component\Validator\ConstraintValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * The main access point for reviewing jobs.
@@ -17,33 +14,33 @@ use Zend\EventManager\SharedEventManagerInterface;
  */
 class Docbot
 {
-    /** @var EventManagerInterface */
-    private $eventManager;
+    /** @var ConstraintValidator[] */
+    private $reviewers = array();
+    /** @var ValidatorInterface */
+    private $validator;
 
-    public function __construct(SharedEventManagerInterface $eventManager = null)
+    public function __construct(ValidatorInterface $validator)
     {
-        $this->eventManager = new EventManager();
-        $this->eventManager->setIdentifiers(array('docbot'));
-
-        $this->eventManager->setSharedManager($eventManager ?: new SharedEventManager());
+        $this->validator = $validator;
     }
 
-    public function getEventManager()
+    public function addReviewer(ConstraintValidator $reviewer, $priority = 0)
     {
-        return $this->eventManager;
-    }
+        $this->reviewers[] = array($priority, $reviewer);
 
-    /**
-     * A helper function to attach the reviewer to the correct events
-     */
-    public function addReviewer(Reviewer $reviewer, $priority = 0)
-    {
-        $this->eventManager->attach('file_review_requested', array($reviewer, 'review'), $priority);
-        $reviewer->getEventManager()->setSharedManager($this->eventManager->getSharedManager());
+        usort($this->reviewers, function ($a, $b) {
+            if ($a[0] === $b[0]) {
+                return 0;
+            }
+
+            return $a[0] > $b[0] ? -1 : 1;
+        });
     }
 
     public function lint(Text $file)
     {
-        $this->eventManager->trigger(new RequestFileReview($file));
+        return $this->validator->validate($file, array(
+            new Check\LineLength(),
+        ));
     }
 }

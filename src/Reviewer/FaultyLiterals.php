@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer hinting for possibly wrong backtick usage.
  *
@@ -12,11 +14,12 @@ namespace Docbot\Reviewer;
  */
 class FaultyLiterals extends Base
 {
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/\s`([^`]+)`[^_]/', $line, $matches)) {
-            $this->reportError(
-                'Found unrecognized usage of backticks. Did you mean to create a link (`'.$matches[1].'`_) or a literal (``'.$matches[1].'``)?'
+            $this->addError(
+                'Found unrecognized usage of backticks. Did you mean to create a link (`%value%`_) or a literal (``%value%``)?',
+                array('%value%' => $matches[1])
             );
         }
     }

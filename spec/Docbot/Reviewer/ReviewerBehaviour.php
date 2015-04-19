@@ -3,15 +3,16 @@
 namespace spec\Docbot\Reviewer;
 
 use PhpSpec\ObjectBehavior;
-use Zend\EventManager\EventManagerInterface;
+
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * @author Wouter J <wouter@wouterj.nl>
  */
 class ReviewerBehaviour extends ObjectBehavior
 {
-    function let(EventManagerInterface $eventManager)
+    function let(ExecutionContextInterface $context)
     {
-        $this->setEventManager($eventManager);
+        $this->initialize($context);
     }
 }

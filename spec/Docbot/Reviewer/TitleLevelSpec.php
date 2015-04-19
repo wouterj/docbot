@@ -2,46 +2,48 @@
 
 namespace spec\Docbot\Reviewer;
 
-use Docbot\Event\RequestFileReview;
 use Gnugat\Redaktilo\Text;
-use Prophecy\Argument;
-use spec\helpers\Promise\FileReviewEvent as PromiseThatEvent;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
-use Zend\EventManager\Event;
-use Zend\EventManager\EventManagerInterface;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 class TitleLevelSpec extends ReviewerBehaviour
 {
-    function it_finds_wrong_level_characters(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_finds_wrong_level_characters(ExecutionContextInterface $context, ConstraintViolationBuilderInterface $builder)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromArray(array(
+        PredictThatReviewer::shouldReportError(
+            $context, $builder,
+            'The "%underline_char%" character should be used for a title level %level%', 5,
+            array('%underline_char%' => '-', '%level%' => 2)
+        );
+
+        $this->review(Text::fromArray(array(
             'Title Level 1',
             '=============',
             '',
             'Title level 2',
             '~~~~~~~~~~~~~'
         )));
-
-        PredictThatReviewer::shouldReportError($eventManager, 'The "-" character should be used for a title level 2', 5);
-
-        $this->review($event);
     }
 
-    function it_finds_unused_underline_characters(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_finds_unused_underline_characters(ExecutionContextInterface $context, ConstraintViolationBuilderInterface $builder)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromArray(array(
+        PredictThatReviewer::shouldReportError(
+            $context, $builder,
+            'Only =, -, ~, . and " should be used as title underlines', 2
+        );
+
+        $this->review(Text::fromArray(array(
             'Title Level 1',
             '+++++++++++++',
         )));
-
-        PredictThatReviewer::shouldReportError($eventManager, 'Only =, -, ~, . and " should be used as title underlines', 2);
-
-        $this->review($event);
     }
 
-    function it_accepts_jumping_levels_up(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_accepts_jumping_levels_up(ExecutionContextInterface $context)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromArray(array(
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
             'Title level 1',
             '=============',
             '',
@@ -57,9 +59,5 @@ class TitleLevelSpec extends ReviewerBehaviour
             'Title level 2',
             '-------------',
         )));
-
-        PredictThatReviewer::shouldNotReportAnyError($eventManager);
-
-        $this->review($event);
     }
 }

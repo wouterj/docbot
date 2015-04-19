@@ -2,10 +2,9 @@
 
 namespace spec\Docbot\Reviewer;
 
-use Docbot\Event\RequestFileReview;
 use Gnugat\Redaktilo\Text;
-use Zend\EventManager\EventManagerInterface;
-use spec\helpers\Promise\FileReviewEvent as PromiseThatEvent;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
 
 /**
@@ -13,12 +12,14 @@ use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
  */
 class SerialCommaSpec extends ReviewerBehaviour
 {
-    function it_finds_serial_commas(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_finds_serial_commas(ExecutionContextInterface $context, ConstraintViolationBuilderInterface $builder)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromString('One has foo, bar, and cat.'));
+        PredictThatReviewer::shouldReportError(
+            $context, $builder,
+            'Serial (Oxford) comma\'s should be avoided: "[...] %word% %conjunction% [...]"', 1,
+            array('%word%' => 'bar', '%conjunction%' => 'and')
+        );
 
-        PredictThatReviewer::shouldReportError($eventManager, 'Serial (Oxford) comma\'s should be avoided: "[...] bar and [...]"', 1);
-
-        $this->review($event);
+        $this->review(Text::fromString('One has foo, bar, and cat.'));
     }
 }

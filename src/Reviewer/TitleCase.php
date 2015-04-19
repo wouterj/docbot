@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer checking the title case (very experimental).
  *
@@ -25,7 +27,7 @@ class TitleCase extends Base
         'when', 'how', 'versus', 'vs', 'let', 'is', 'be', 'for', 'each', 'not', 'out', 'based',
     );
 
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line)) {
             $titleText = trim($file->getLine($lineNumber - 1));
@@ -59,10 +61,10 @@ class TitleCase extends Base
             $correctTitle = trim(ucfirst($correctTitle));
 
             if ($correctTitle !== $titleText) {
-                $this->reportError(
-                    '(experimental) All words, except from closed-class words, have to be capitalized: "'.$correctTitle.'"',
-                    $lineNumber,
-                    $file->getLine($lineNumber - 1)
+                $this->addError(
+                    '(experimental) All words, except from closed-class words, have to be capitalized: "%correct_title%"',
+                    array('%correct_title%' => $correctTitle),
+                    $lineNumber
                 );
             }
         }

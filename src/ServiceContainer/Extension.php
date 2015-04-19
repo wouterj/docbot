@@ -2,6 +2,7 @@
 
 namespace Docbot\ServiceContainer;
 
+use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -16,9 +17,8 @@ use Symfony\Component\DependencyInjection\Reference;
 class Extension extends Base implements CompilerPassInterface
 {
     const DOCBOT_ID = 'docbot';
+    const VALIDATOR_ID = 'validator';
     const REVIEWER_TAG = 'reviewer';
-    const SHARED_EVENT_MANAGER_ID = 'event_manager';
-    const LISTENER_TAG = 'event_listener';
     const COMMAND_TAG = 'command';
 
     /**
@@ -39,31 +39,17 @@ class Extension extends Base implements CompilerPassInterface
     private function loadServices(ContainerBuilder $container)
     {
         $container->setDefinition(self::DOCBOT_ID, new Definition('Docbot\Docbot', array(
-            new Reference(self::SHARED_EVENT_MANAGER_ID),
+            new Reference(self::VALIDATOR_ID),
         )));
 
-        $container->register(self::SHARED_EVENT_MANAGER_ID, 'Zend\EventManager\SharedEventManager');
+        $definition = new Definition('Symfony\Component\Validator\Validator');
+        $definition->setFactory(array('Symfony\Component\Validator\Validation', 'createValidator'));
+        $container->setDefinition(self::VALIDATOR_ID, $definition);
 
-        $container->register('reporter.console', 'Docbot\Reporter\Console')
-            ->addArgument('%cli.output%')
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'reviewer',
-                'event' => 'error_reported',
-                'method' => 'collectErrors',
-            ))
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'docbot',
-                'event' => 'file_review_requested',
-                'method' => 'printFileName',
-                'priority' => 999,
-            ))
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'docbot',
-                'event' => 'file_review_requested',
-                'method' => 'printReport',
-                'priority' => -999,
-            ))
-        ;
+        $definition = new Definition('Docbot\Reporter\Console', array(new Reference(CliExtension::OUTPUT_ID)));
+        $container->setDefinition('reporter.console', $definition);
+
+        $container->setAlias('reporter', new Alias('reporter.console'));
     }
 
     protected function loadCommands(ContainerBuilder $container)
@@ -110,7 +96,6 @@ class Extension extends Base implements CompilerPassInterface
     {
         $this->registerCommands($container);
         $this->registerReviewers($container);
-        $this->registerListeners($container);
     }
 
     private function registerCommands(ContainerBuilder $container)
@@ -127,23 +112,6 @@ class Extension extends Base implements CompilerPassInterface
         }
 
         $container->setParameter('console.commands', $commands);
-    }
-
-    private function registerListeners(ContainerBuilder $container)
-    {
-        $definition = $container->getDefinition(self::SHARED_EVENT_MANAGER_ID);
-
-        $listeners = $container->findTaggedServiceIds(self::LISTENER_TAG);
-        foreach ($listeners as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $definition->addMethodCall('attach', array(
-                    $attributes['target'],
-                    $attributes['event'],
-                    array(new Reference($id), $attributes['method']),
-                    isset($attributes['priority']) ? $attributes['priority'] : 1,
-                ));
-            }
-        }
     }
 
     private function registerReviewers(ContainerBuilder $container)

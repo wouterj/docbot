@@ -2,21 +2,25 @@
 
 namespace Docbot\Reporter;
 
-use Docbot\Event\ReportError;
-use Docbot\Event\RequestFileReview;
+
+
+use Docbot\Reporter;
+use Gnugat\Redaktilo\File;
+use Gnugat\Redaktilo\Text;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
  * An output printer that prints into the console.
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class Console
+class Console implements Reporter
 {
     /** @var OutputInterface */
     private $output;
-    private $errors = array();
     /** @var FormatterHelper */
     private $formatterHelper;
 
@@ -26,52 +30,38 @@ class Console
         $this->output = $output;
     }
 
-    public function printFileName(RequestFileReview $event)
+    public function handle(ConstraintViolationListInterface $constraintViolationList, Text $file)
     {
-        $this->errors = array();
+        if ($file instanceof File) {
+            $this->printFilename($file);
+        }
 
-        $filename = str_replace(getcwd(), '', $event->getFilename());
-        $this->output->writeln(array(
-            '<fg=blue>',
-            $filename,
-            str_repeat('=', strlen($filename)),
-            '</fg=blue>',
-        ));
-    }
+        if (0 === $errorCount = count($constraintViolationList)) {
+            $this->output->writeln('');
+            $this->outputBlock('Perfect! No errors were found.');
 
-    public function printReport(RequestFileReview $event)
-    {
-        $errorCount = $this->getErrorCount();
+            return self::SUCCESS;
+        }
 
-        if (0 === $errorCount) {
-            $this->outputBlock('There where no errors founds');
-        } else {
-            ksort($this->errors);
-            foreach ($this->errors as $lineNumber => $errors) {
-                $this->output->writeln('<comment>['.$lineNumber.']</comment> "'.$errors['_line'].'"');
-
-                unset($errors['_line']);
-                $indent = 3 + strlen($lineNumber);
-                $errors = $this->indentErrorMessages($errors, $indent);
-                $this->output->writeln($errors);
+        $currentLineNumber = 0;
+        /** @var ConstraintViolation $violation */
+        foreach ($constraintViolationList as $violation) {
+            $lineNumber = $this->getLineNumber($violation);
+            if ($lineNumber !== $currentLineNumber) {
                 $this->output->writeln('');
+                $this->printLine($file, $lineNumber);
+
+                $currentLineNumber = $lineNumber;
             }
 
-            $this->outputBlock($errorCount.' errors are found', false);
+            $indent = 3 + strlen($lineNumber);
+            $this->printError($violation, $indent);
         }
 
         $this->output->writeln('');
-    }
+        $this->outputBlock(sprintf('Found %d error%s.', $errorCount, $errorCount === 1 ? '' : 's'), false);
 
-    public function collectErrors(ReportError $event)
-    {
-        $lineNumber = $event->getLineNumber();
-
-        if (!isset($this->errors[$lineNumber])) {
-            $this->errors[$lineNumber] = array('_line' => $event->getLine());
-        }
-
-        $this->errors[$lineNumber][] = $event->getMessage();
+        return self::ERROR;
     }
 
     private function outputBlock($message, $success = true)
@@ -82,27 +72,40 @@ class Console
         $this->output->writeln($this->formatterHelper->formatBlock($message, 'bg='.$color, true));
     }
 
-    private function getErrorCount()
+    private function getLineNumber(ConstraintViolation $violation)
     {
-        return count(array_merge($this->errors));
+        if (!preg_match('/lines\[(\d+)\]/', $violation->getPropertyPath(), $matches)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Cannot get line number of string "%s". Format has to be: line[%line_number%]',
+                $violation->getPropertyPath()
+            ));
+        }
+
+        return intval($matches[1]);
     }
 
-    /**
-     * @return array
-     */
-    private function indentErrorMessages(array $errors, $indent)
+    private function printFilename(File $file)
     {
-        $indent = str_repeat(' ', $indent);
+        $filename = str_replace(getcwd(), '', $file->getFilename());
+        $this->output->writeln(
+            array(
+                '<fg=blue>',
+                $filename,
+                str_repeat('=', strlen($filename)).'</fg=blue>',
+            )
+        )
+        ;
+    }
 
-        return array_map(
-            function ($error) use ($indent) {
-                if (!$error) {
-                    return;
-                }
+    private function printLine(Text $file, $lineNumber)
+    {
+        $line = $file->getLine($lineNumber - 1);
 
-                return $indent.'- <fg=red>'.$error.'</fg=red>';
-            },
-            $errors
-        );
+        $this->output->writeln('<comment>['.$lineNumber.']</comment> "'.$line.'"');
+    }
+
+    private function printError(ConstraintViolation $violation, $indent)
+    {
+        $this->output->writeln(str_repeat(' ', $indent).'- <fg=red>'.$violation->getMessage().'</>');
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer checking the correct title level usages.
  *
@@ -18,7 +20,7 @@ class TitleLevel extends Base
     );
     private $currentLevel = 1;
 
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line, $data)) {
             $character = $data[1];
@@ -26,7 +28,7 @@ class TitleLevel extends Base
             $level = array_search($character, $this->levels);
 
             if (false === $level) {
-                $this->reportError('Only =, -, ~, . and " should be used as title underlines');
+                $this->addError('Only =, -, ~, . and " should be used as title underlines');
 
                 return;
             }
@@ -38,10 +40,13 @@ class TitleLevel extends Base
             }
 
             if ($this->currentLevel + 1 !== $level) {
-                $this->reportError(sprintf(
-                    'The "%s" character should be used for a title level %s',
-                    $this->levels[$this->currentLevel + 1], $this->currentLevel + 1
-                ));
+                $this->addError(
+                    'The "%underline_char%" character should be used for a title level %level%',
+                    array(
+                        '%underline_char%' => $this->levels[$this->currentLevel + 1],
+                        '%level%' => $this->currentLevel + 1,
+                    )
+                );
             } else {
                 $this->currentLevel = $level;
             }

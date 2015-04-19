@@ -51,7 +51,12 @@ class Lint extends Command
             $path = $path->getPathname();
         }
 
-        $this->getContainer()->get(DocbotExtension::DOCBOT_ID)->lint(EditorFactory::createEditor()->open($path));
+        $container = $this->getContainer();
+
+        $file = EditorFactory::createEditor()->open($path);
+        $violations = $container->get(DocbotExtension::DOCBOT_ID)->lint($file);
+
+        return $container->get('reporter')->handle($violations, $file);
     }
 
     private function lintDirectory($path, $ignore = null)
