@@ -23,5 +23,11 @@
     },
     "autoload-dev": {
         "psr-0": {"spec\\": "."}
+    },
+
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
     }
 }
