@@ -9,6 +9,11 @@ use Symfony\Component\Validator\Constraint;
  */
 class Base extends Constraint
 {
+    public function getTargets()
+    {
+        return self::CLASS_CONSTRAINT;
+    }
+
     public function validatedBy()
     {
         return str_replace('Check\\', '', get_class($this));

@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension as Base;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Validator\Validation;
 
 /**
  * The core extension.
@@ -33,7 +34,6 @@ class Extension extends Base implements CompilerPassInterface
 
         $this->loadServices($container);
         $this->loadCommands($container);
-        $this->loadReviewers($container, $config['reviewers']['types']);
     }
 
     private function loadServices(ContainerBuilder $container)
@@ -42,8 +42,16 @@ class Extension extends Base implements CompilerPassInterface
             new Reference(self::VALIDATOR_ID),
         )));
 
+        $container->register('validator.metadata_factory', 'Docbot\Validator\MetadataFactory');
+
+        $definition = new Definition('Symfony\Component\Validator\ValidatorBuilder');
+        $definition->setFactory(array('Symfony\Component\Validator\Validation', 'createValidatorBuilder'));
+        $definition->addMethodCall('setMetadataFactory', array(new Reference('validator.metadata_factory')));
+        $definition->addMethodCall('setApiVersion', array(Validation::API_VERSION_2_5));
+        $container->setDefinition('validator.builder', $definition);
+
         $definition = new Definition('Symfony\Component\Validator\Validator');
-        $definition->setFactory(array('Symfony\Component\Validator\Validation', 'createValidator'));
+        $definition->setFactory(array(new Reference('validator.builder'), 'getValidator'));
         $container->setDefinition(self::VALIDATOR_ID, $definition);
 
         $definition = new Definition('Docbot\Reporter\Console', array(new Reference(CliExtension::OUTPUT_ID)));
@@ -57,36 +65,6 @@ class Extension extends Base implements CompilerPassInterface
         $definition = new Definition('Docbot\Command\lint');
         $definition->addTag(self::COMMAND_TAG);
         $container->setDefinition('command.lint', $definition);
-    }
-
-    protected function loadReviewers(ContainerBuilder $container, array $types)
-    {
-        foreach ($types as $type) {
-            $this->{'load'.ucfirst($type).'Reviewers'}($container);
-        }
-    }
-
-    protected function loadSymfonyReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.unstyled_admonitions', 'Docbot\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.shortphp_syntax', 'Docbot\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
-    }
-
-    protected function loadDocReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.title_case', 'Docbot\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.first_person', 'Docbot\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_level', 'Docbot\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.line_length', 'Docbot\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.serial_comma', 'Docbot\Reviewer\SerialComma')->addTag(self::REVIEWER_TAG);
-    }
-
-    protected function loadRstReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.trailing_whitespace', 'Docbot\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.faulty_literals', 'Docbot\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.directive_whitespace', 'Docbot\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_underline', 'Docbot\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
     }
 
     /**

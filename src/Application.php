@@ -59,15 +59,6 @@ class Application extends BaseApplication
                 array('DocbotCore')
             )
         );
-        $definition->addOption(
-            new InputOption(
-                'types',
-                't',
-                InputOption::VALUE_REQUIRED,
-                'The reviewer types (available: rst, doc, symfony)',
-                'rst, doc, symfony'
-            )
-        );
 
         return $definition;
     }
@@ -104,12 +95,6 @@ class Application extends BaseApplication
         }
 
         $factory->addExtension(new CliExtension($input, $output));
-
-        $factory->addConfigFor('docbot', array(
-            'reviewers' => array(
-                'types' => array_map('trim', explode(',', $input->getParameterOption(array('--types', '-t'), 'rst, doc, symfony'))),
-            ),
-        ));
 
         return $factory->createContainer();
     }

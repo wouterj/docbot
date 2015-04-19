@@ -37,10 +37,8 @@ class Docbot
         });
     }
 
-    public function lint(Text $file)
+    public function lint(Text $file, array $types = null)
     {
-        return $this->validator->validate($file, array(
-            new Check\LineLength(),
-        ));
+        return $this->validator->validate($file, null, $types ?: array('symfony', 'doc', 'rst'));
     }
 }
