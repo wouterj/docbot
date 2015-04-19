@@ -32,7 +32,7 @@ class Application extends BaseApplication
 
     public function __construct()
     {
-        parent::__construct('Docbot', '0.1.0');
+        parent::__construct('Docbot', '0.2-dev');
     }
 
     public function getContainer()
