@@ -17,12 +17,16 @@ Welcome to DocBot! This bot will lint your documentation files according to the
 
     # ignoring files (like backup files)
     $ docbot lint --ignore *~ some_directory/
+    # or
+    $ docbot lint -i *~ some_directory/
 
     # specifying a reviewer type (available types: rst, doc, symfony)
     $ docbot lint --types rst ...
+    # or
+    $ docbot lint -t rst ...
 
     # or multiple types
-    $ docbot lint --types rst,doc ...
+    $ docbot lint -t rst -t doc ...
 
 ## Contribute
 
@@ -31,11 +35,8 @@ issues or do any other thing that benefits Docbot.
 
 ## Internals
 
-Docbot works by triggering events. `Docbot#lint()` opens the file and triggers
-`RequestFileReview::EVENT`. All reviewers are attached to this event and start
-reviewing the file. If a reviewer found an error, `ReportError::EVENT` is
-triggered. The reporter is attached to this event and makes sure the error is
-reported.
+The DocBot is written as a big validator, each reviewer being a
+ConstraintValidator for a class constraint of `Gnugat\Redaktilo\Text`.
 
 ## License
 
