@@ -7,7 +7,7 @@
         "symfony/console": "~2.3",
         "symfony/finder": "~2.3",
         "gnugat/redaktilo": "~1.7",
-        "zendframework/zend-eventmanager": "~2.3",
+        "symfony/validator": "~2.5",
         "symfony/dependency-injection": "~2.5",
         "symfony/config": "~2.3"
     },

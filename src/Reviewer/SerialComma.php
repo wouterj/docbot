@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer checking for serial comma usage.
  *
@@ -11,10 +13,16 @@ namespace Docbot\Reviewer;
  */
 class SerialComma extends Base
 {
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/(\w*), (and)/', $line, $matches)) {
-            $this->reportError(sprintf('Serial (Oxford) comma\'s should be avoided: "[...] %s %s [...]"', $matches[1], $matches[2]));
+            $this->addError(
+                'Serial (Oxford) comma\'s should be avoided: "[...] %word% %conjunction% [...]"',
+                array(
+                    '%word%' => $matches[1],
+                    '%conjunction%' => $matches[2],
+                )
+            );
         }
     }
 }

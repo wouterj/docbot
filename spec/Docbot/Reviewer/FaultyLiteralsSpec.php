@@ -2,10 +2,9 @@
 
 namespace spec\Docbot\Reviewer;
 
-use Docbot\Event\RequestFileReview;
 use Gnugat\Redaktilo\Text;
-use Zend\EventManager\EventManagerInterface;
-use spec\helpers\Promise\FileReviewEvent as PromiseThatEvent;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
 
 /**
@@ -13,16 +12,14 @@ use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
  */
 class FaultyLiteralsSpec extends ReviewerBehaviour
 {
-    function it_finds_single_backtick_usage(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_finds_single_backtick_usage(ExecutionContextInterface $context, ConstraintViolationBuilderInterface $builder)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromString('This is probably some `wrong` backtick usage.'));
-
         PredictThatReviewer::shouldReportError(
-            $eventManager,
-            'Found unrecognized usage of backticks. Did you mean to create a link (`wrong`_) or a literal (``wrong``)?',
-            1
+            $context, $builder,
+            'Found unrecognized usage of backticks. Did you mean to create a link (`%value%`_) or a literal (``%value%``)?', 1,
+            array('%value%' => 'wrong')
         );
 
-        $this->review($event);
+        $this->review(Text::fromString('This is probably some `wrong` backtick usage.'));
     }
 }

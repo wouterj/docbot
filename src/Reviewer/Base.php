@@ -2,70 +2,59 @@
 
 namespace Docbot\Reviewer;
 
-use Docbot\Editor;
-use Docbot\Event\ReportError;
-use Docbot\Event\RequestFileReview;
-use Docbot\Reviewer;
-use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
+use Gnugat\Redaktilo\Text;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\ConstraintValidator;
 
 /**
  * @author Wouter J <wouter@wouterj.nl>
  */
-abstract class Base implements Reviewer
+abstract class Base extends ConstraintValidator
 {
-    /** @var EventManagerInterface */
-    private $eventManager;
-    private $file;
-    private $line;
+    /** @var null|int */
     private $lineNumber;
 
-    public function review(RequestFileReview $event)
+    /** {@inheritdoc} */
+    public function validate($value, Constraint $constraint)
     {
-        $event->getFile()->map(array($this, 'doReviewLine'));
-    }
-
-    public function doReviewLine($line, $lineNumber, $file)
-    {
-        if ($file !== $this->file) {
-            $this->file = $file;
+        if (!$value instanceof Text) {
+            throw new \InvalidArgumentException('Reviewers can only review Text instances, "%s" given.', gettype($value));
         }
-        $this->line = $line;
-        $this->lineNumber = $lineNumber + 1;
 
-        return $this->reviewLine($line, $lineNumber, $file);
-    }
-
-    abstract public function reviewLine($line, $lineNumber, $file);
-
-    protected function reportError($message, $lineNumber = null, $line = null)
-    {
-        $this->getEventManager()->trigger(new ReportError(
-            $message,
-            $line ?: $this->line,
-            $lineNumber ?: $this->lineNumber,
-            $this->file
-        ));
+        $this->review($value);
     }
 
     /**
-     * {@inheritDocs}
+     * Default implementation of the review method.
+     *
+     * The default implementation iterates over each line and
+     * let the reviewer review that line.
+     *
+     * @param Text $file
      */
-    public function setEventManager(EventManagerInterface $eventManager)
+    public function review(Text $file)
     {
-        $this->eventManager = $eventManager;
+        $file->map(array($this, 'doReviewLine'));
     }
 
-    /**
-     * {@inheritDocs}
-     */
-    public function getEventManager()
+    public function doReviewLine($line, $lineNumber, Text $file)
     {
-        if (null === $this->eventManager) {
-            $this->eventManager = new EventManager(array('reviewer', get_class($this)));
+        $this->lineNumber = $lineNumber;
+
+        $this->reviewLine($line, $lineNumber, $file);
+    }
+
+    protected function addError($message, array $parameters = array(), $lineNumber = null)
+    {
+        $violation = $this->context->buildViolation($message)
+            ->atPath('lines['.(null === $lineNumber ? ++$this->lineNumber : $lineNumber).']');
+
+        foreach ($parameters as $name => $value) {
+            $violation->setParameter($name, $value);
         }
 
-        return $this->eventManager;
+        $violation->addViolation();
     }
 
+    abstract public function reviewLine($line, $lineNumber, Text $file);
 }

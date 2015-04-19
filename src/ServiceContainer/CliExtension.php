@@ -8,10 +8,15 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 
 /**
+ * A special extension taking care of console input/output services.
+ *
  * @author Wouter J <wouter@wouterj.nl>
  */
 class CliExtension extends Extension
 {
+    const INPUT_ID = 'cli.input';
+    const OUTPUT_ID = 'cli.output';
+
     private $input;
     private $output;
 
@@ -23,7 +28,7 @@ class CliExtension extends Extension
 
     public function load(array $config, ContainerBuilder $container)
     {
-        $container->setParameter('cli.output', $this->output);
-        $container->setParameter('cli.input', $this->input);
+        $container->register(self::OUTPUT_ID, $this->output);
+        $container->register(self::INPUT_ID, $this->input);
     }
 }

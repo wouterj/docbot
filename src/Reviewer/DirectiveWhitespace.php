@@ -2,6 +2,8 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\Text;
+
 /**
  * A reviewer that fixes required whitespaces on directives.
  *
@@ -12,15 +14,16 @@ namespace Docbot\Reviewer;
  */
 class DirectiveWhitespace extends Base
 {
-    public function reviewLine($line, $lineNumber, $file)
+    public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/^\s*\.\. ([\w-]+)::|::$/', $line, $data)) {
             $nextLine = $file->getLine($lineNumber + 1);
 
             if (isset($data[1]) && 'versionadded' === $data[1]) {
                 if (trim($nextLine) === '') {
-                    $this->reportError(
+                    $this->addError(
                         'There should be no empty line between the start of a versionadded directive and the body',
+                        array(),
                         $lineNumber + 3
                     );
                 }
@@ -33,8 +36,9 @@ class DirectiveWhitespace extends Base
             }
 
             if (trim($nextLine) !== '') {
-                $this->reportError(
+                $this->addError(
                     'There should be an empty line between the body and the start of a directive (except from versionadded directives)',
+                    array(),
                     $lineNumber + 2
                 );
             }

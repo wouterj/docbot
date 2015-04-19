@@ -2,19 +2,27 @@
 
 namespace spec\Docbot\Reviewer;
 
-use Docbot\Event\RequestFileReview;
 use Gnugat\Redaktilo\Text;
-use Prophecy\Argument;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
-use spec\helpers\Promise\FileReviewEvent as PromiseThatEvent;
-use Zend\EventManager\Event;
-use Zend\EventManager\EventManagerInterface;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 class UnstyledAdmonitionsSpec extends ReviewerBehaviour
 {
-    function it_finds_unstyled_directives(RequestFileReview $event, EventManagerInterface $eventManager)
+    function it_finds_unstyled_directives(ExecutionContextInterface $context, ConstraintViolationBuilderInterface $builder)
     {
-        PromiseThatEvent::willHaveFile($event, Text::fromArray(array(
+        PredictThatReviewer::shouldReportError(
+            $context, $builder,
+            'The "%type%" directive is not styled on symfony.com', 1,
+            array('%type%' => 'warning')
+        );
+        PredictThatReviewer::shouldReportError(
+            $context, $builder,
+            'The "%type%" directive is not styled on symfony.com', 5,
+            array('%type%' => 'danger')
+        );
+
+        $this->review(Text::fromArray(array(
             '.. warning::',
             '',
             '    I am stoffing you!',
@@ -23,10 +31,5 @@ class UnstyledAdmonitionsSpec extends ReviewerBehaviour
             '',
             '    I may put a comment on each line of your PR',
         )));
-
-        PredictThatReviewer::shouldReportError($eventManager, 'The "warning" directive is not styled on symfony.com', 1);
-        PredictThatReviewer::shouldReportError($eventManager, 'The "danger" directive is not styled on symfony.com', 5);
-
-        $this->review($event);
     }
 }

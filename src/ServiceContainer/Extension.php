@@ -2,11 +2,13 @@
 
 namespace Docbot\ServiceContainer;
 
+use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension as Base;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Validator\Validation;
 
 /**
  * The core extension.
@@ -16,101 +18,60 @@ use Symfony\Component\DependencyInjection\Reference;
 class Extension extends Base implements CompilerPassInterface
 {
     const DOCBOT_ID = 'docbot';
-    const REVIEWER_TAG = 'reviewer';
-    const SHARED_EVENT_MANAGER_ID = 'event_manager';
-    const LISTENER_TAG = 'event_listener';
+    const VALIDATOR_ID = 'validator';
     const COMMAND_TAG = 'command';
 
-    /**
-     * {@inheritDocs}
-     */
+    /** {@inheritdoc} */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = call_user_func_array('array_merge_recursive', array_merge(
-            array('reviewers' => array('types' => array())),
-            $config
-        ));
-
         $this->loadServices($container);
+        $this->loadValidator($container);
+        $this->loadReporters($container);
         $this->loadCommands($container);
-        $this->loadReviewers($container, $config['reviewers']['types']);
     }
 
     private function loadServices(ContainerBuilder $container)
     {
-        $container->setDefinition(self::DOCBOT_ID, new Definition('Docbot\Docbot', array(
-            new Reference(self::SHARED_EVENT_MANAGER_ID),
-        )));
-
-        $container->register(self::SHARED_EVENT_MANAGER_ID, 'Zend\EventManager\SharedEventManager');
-
-        $container->register('reporter.console', 'Docbot\Reporter\Console')
-            ->addArgument('%cli.output%')
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'reviewer',
-                'event' => 'error_reported',
-                'method' => 'collectErrors',
-            ))
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'docbot',
-                'event' => 'file_review_requested',
-                'method' => 'printFileName',
-                'priority' => 999,
-            ))
-            ->addTag(self::LISTENER_TAG, array(
-                'target' => 'docbot',
-                'event' => 'file_review_requested',
-                'method' => 'printReport',
-                'priority' => -999,
-            ))
-        ;
+        $definition = new Definition('Docbot\Docbot', array(new Reference(self::VALIDATOR_ID)));
+        $container->setDefinition(self::DOCBOT_ID, $definition);
     }
 
-    protected function loadCommands(ContainerBuilder $container)
+    private function loadValidator(ContainerBuilder $container)
+    {
+        $container->register('validator.metadata_factory', 'Docbot\Validator\MetadataFactory');
+
+        $definition = new Definition('Symfony\Component\Validator\ValidatorBuilder');
+        $definition
+            ->setFactory(array('Symfony\Component\Validator\Validation', 'createValidatorBuilder'))
+            ->addMethodCall('setMetadataFactory', array(new Reference('validator.metadata_factory')))
+            ->addMethodCall('setApiVersion', array(Validation::API_VERSION_2_5))
+        ;
+        $container->setDefinition('validator.builder', $definition);
+
+        $definition = new Definition('Symfony\Component\Validator\Validator');
+        $definition->setFactory(array(new Reference('validator.builder'), 'getValidator'));
+        $container->setDefinition(self::VALIDATOR_ID, $definition);
+    }
+
+    private function loadReporters(ContainerBuilder $container)
+    {
+        $definition = new Definition('Docbot\Reporter\Console', array(new Reference(CliExtension::OUTPUT_ID)));
+        $container->setDefinition('reporter.console', $definition);
+
+        $container->setAlias('reporter', new Alias('reporter.console'));
+    }
+
+    private function loadCommands(ContainerBuilder $container)
     {
         $definition = new Definition('Docbot\Command\lint');
         $definition->addTag(self::COMMAND_TAG);
         $container->setDefinition('command.lint', $definition);
     }
 
-    protected function loadReviewers(ContainerBuilder $container, array $types)
-    {
-        foreach ($types as $type) {
-            $this->{'load'.ucfirst($type).'Reviewers'}($container);
-        }
-    }
-
-    protected function loadSymfonyReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.unstyled_admonitions', 'Docbot\Reviewer\UnstyledAdmonitions')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.shortphp_syntax', 'Docbot\Reviewer\ShortPhpSyntax')->addTag(self::REVIEWER_TAG);
-    }
-
-    protected function loadDocReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.title_case', 'Docbot\Reviewer\TitleCase')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.first_person', 'Docbot\Reviewer\FirstPerson')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_level', 'Docbot\Reviewer\TitleLevel')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.line_length', 'Docbot\Reviewer\LineLength')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.serial_comma', 'Docbot\Reviewer\SerialComma')->addTag(self::REVIEWER_TAG);
-    }
-
-    protected function loadRstReviewers(ContainerBuilder $container)
-    {
-        $container->register('reviewer.trailing_whitespace', 'Docbot\Reviewer\TrailingWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.faulty_literals', 'Docbot\Reviewer\FaultyLiterals')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.directive_whitespace', 'Docbot\Reviewer\DirectiveWhitespace')->addTag(self::REVIEWER_TAG);
-        $container->register('reviewer.title_underline', 'Docbot\Reviewer\TitleUnderline')->addTag(self::REVIEWER_TAG);
-    }
-
-    /**
-     * {@inheritDocs}
-     */
+    /** {@inheritdoc} */
     public function process(ContainerBuilder $container)
     {
         $this->registerCommands($container);
-        $this->registerReviewers($container);
-        $this->registerListeners($container);
     }
 
     private function registerCommands(ContainerBuilder $container)
@@ -127,33 +88,6 @@ class Extension extends Base implements CompilerPassInterface
         }
 
         $container->setParameter('console.commands', $commands);
-    }
-
-    private function registerListeners(ContainerBuilder $container)
-    {
-        $definition = $container->getDefinition(self::SHARED_EVENT_MANAGER_ID);
-
-        $listeners = $container->findTaggedServiceIds(self::LISTENER_TAG);
-        foreach ($listeners as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $definition->addMethodCall('attach', array(
-                    $attributes['target'],
-                    $attributes['event'],
-                    array(new Reference($id), $attributes['method']),
-                    isset($attributes['priority']) ? $attributes['priority'] : 1,
-                ));
-            }
-        }
-    }
-
-    private function registerReviewers(ContainerBuilder $container)
-    {
-        $definition = $container->getDefinition(self::DOCBOT_ID);
-
-        $reviewers = $container->findTaggedServiceIds(self::REVIEWER_TAG);
-        foreach ($reviewers as $id => $tags) {
-            $definition->addMethodCall('addReviewer', array(new Reference($id)));
-        }
     }
 
     public function getAlias()

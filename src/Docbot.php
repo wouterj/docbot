@@ -2,13 +2,9 @@
 
 namespace Docbot;
 
-use Docbot\Event\RequestFileReview;
-use Docbot\Reviewer;
+use Docbot\Reviewer\Check;
 use Gnugat\Redaktilo\Text;
-use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
-use Zend\EventManager\SharedEventManager;
-use Zend\EventManager\SharedEventManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * The main access point for reviewing jobs.
@@ -17,33 +13,27 @@ use Zend\EventManager\SharedEventManagerInterface;
  */
 class Docbot
 {
-    /** @var EventManagerInterface */
-    private $eventManager;
+    /** @var ValidatorInterface */
+    private $validator;
 
-    public function __construct(SharedEventManagerInterface $eventManager = null)
+    public function __construct(ValidatorInterface $validator)
     {
-        $this->eventManager = new EventManager();
-        $this->eventManager->setIdentifiers(array('docbot'));
-
-        $this->eventManager->setSharedManager($eventManager ?: new SharedEventManager());
-    }
-
-    public function getEventManager()
-    {
-        return $this->eventManager;
+        $this->validator = $validator;
     }
 
     /**
-     * A helper function to attach the reviewer to the correct events
+     * Lints the provided file.
+     *
+     * You can restrict the reviewers that are executed by passing an
+     * array of types in the second argument.
+     *
+     * @param Text  $file
+     * @param array $types
+     *
+     * @return \Symfony\Component\Validator\ConstraintViolationListInterface
      */
-    public function addReviewer(Reviewer $reviewer, $priority = 0)
+    public function lint(Text $file, array $types = null)
     {
-        $this->eventManager->attach('file_review_requested', array($reviewer, 'review'), $priority);
-        $reviewer->getEventManager()->setSharedManager($this->eventManager->getSharedManager());
-    }
-
-    public function lint(Text $file)
-    {
-        $this->eventManager->trigger(new RequestFileReview($file));
+        return $this->validator->validate($file, null, $types ?: array('symfony', 'doc', 'rst'));
     }
 }

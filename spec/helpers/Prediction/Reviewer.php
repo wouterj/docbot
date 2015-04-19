@@ -9,15 +9,21 @@ use Prophecy\Argument;
  */
 class Reviewer
 {
-    public static function shouldReportError($eventManager, $message, $lineNumber)
+    public static function shouldReportError($context, $builder, $message, $lineNumber, array $parameters = array())
     {
-        $eventManager->trigger(Argument::that(function ($event) use ($message, $lineNumber) {
-            return $event->getName() === 'error_reported' && $event->getTarget() === 'reviewer' && $event->getMessage() === $message && $event->getLineNumber() === $lineNumber;
-        }))->shouldBeCalled();
+        $context->buildViolation($message)->shouldBeCalled()->willReturn($builder);
+
+        $builder->atPath('lines['.$lineNumber.']')->shouldBeCalled()->willReturn($builder);
+
+        foreach ($parameters as $name => $value) {
+            $builder->setParameter($name, $value)->shouldBeCalled()->willReturn($builder);
+        }
+
+        $builder->addViolation()->shouldBeCalled();
     }
 
-    public static function shouldNotReportAnyError($eventManager)
+    public static function shouldNotReportAnyError($context)
     {
-        $eventManager->trigger('error_reported', 'reviewer', Argument::any())->shouldNotBeCalled();
+        $context->buildViolation(Argument::any())->shouldNotBeCalled();
     }
 }
