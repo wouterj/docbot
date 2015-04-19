@@ -2,8 +2,6 @@
 
 namespace Docbot\Reporter;
 
-
-
 use Docbot\Reporter;
 use Gnugat\Redaktilo\File;
 use Gnugat\Redaktilo\Text;
