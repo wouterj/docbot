@@ -91,7 +91,7 @@ class Console implements Reporter
             array(
                 '<fg=blue>',
                 $filename,
-                str_repeat('=', strlen($filename)).'</fg=blue>',
+                str_repeat('=', strlen($filename)).'</>',
             )
         )
         ;
