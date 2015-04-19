@@ -1,4 +1,4 @@
-# DocBot
+# DocBot (CAUTION: very unstable!)
 
 Welcome to DocBot! This bot will lint your documentation files according to the
 [Symfony Doc Standards](http://symfony.com/doc/current/contributing/documentation/standards.html).
