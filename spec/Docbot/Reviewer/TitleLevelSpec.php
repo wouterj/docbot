@@ -2,6 +2,7 @@
 
 namespace spec\Docbot\Reviewer;
 
+use Gnugat\Redaktilo\File;
 use Gnugat\Redaktilo\Text;
 use spec\helpers\Prediction\Reviewer as PredictThatReviewer;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -59,5 +60,18 @@ class TitleLevelSpec extends ReviewerBehaviour
             'Title level 2',
             '-------------',
         )));
+    }
+
+    function it_allows_inc_files_to_start_with_a_deeper_level(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $file = File::fromArray(array(
+            'Title level 3',
+            '~~~~~~~~~~~~~',
+        ));
+        $file->setFilename('included_file.rst.inc');
+        
+        $this->review($file);
     }
 }
