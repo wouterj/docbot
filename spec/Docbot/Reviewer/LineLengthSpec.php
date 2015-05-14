@@ -52,4 +52,15 @@ class LineLengthSpec extends ReviewerBehaviour
             '**type**: ``string`` **default**: ``This is a long constraint error message, but it should be allowed.``',
         )));
     }
+
+    function it_removes_indentation_of_code_blocks(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
+            '    .. code-block:: php',
+            '',
+            '        // a line that is around 80 characters long, so there should not be an error here',
+        )));
+    }
 }
