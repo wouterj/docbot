@@ -43,4 +43,13 @@ class LineLengthSpec extends ReviewerBehaviour
             '    // but this should error, as it is longer than 80 characters long. Oh dear, what did I do?',
         )));
     }
+
+    function it_allows_definitions_to_exceed_72_characters(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
+            '**type**: ``string`` **default**: ``This is a long constraint error message, but it should be allowed.``',
+        )));
+    }
 }

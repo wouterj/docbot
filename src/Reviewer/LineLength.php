@@ -43,6 +43,11 @@ class LineLength extends Base
             return;
         }
 
+        // exception: type definitions may exceed 72 character limit
+        if (substr($line, 0, 8) === '**type**') {
+            return;
+        }
+
         if (false !== strpos(substr(rtrim($line), 71), ' ')) {
             $this->addError('A line should be wrapped after the first word that crosses the 72th character');
         }
