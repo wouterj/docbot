@@ -42,7 +42,19 @@ class Console implements Reporter
         }
 
         $currentLineNumber = 0;
-        /** @var ConstraintViolation $violation */
+        $constraintViolationList = iterator_to_array($constraintViolationList);
+        $that = $this;
+        usort($constraintViolationList, function (ConstraintViolation $a, ConstraintViolation $b) use ($that) {
+            $aNumber = $that->getLineNumber($a);
+            $bNumber = $that->getLineNumber($b);
+
+            if ($aNumber === $bNumber) {
+                return 0;
+            }
+
+            return $aNumber > $bNumber ? 1 : -1;
+        });
+
         foreach ($constraintViolationList as $violation) {
             $lineNumber = $this->getLineNumber($violation);
             if ($lineNumber !== $currentLineNumber) {
@@ -70,7 +82,8 @@ class Console implements Reporter
         $this->output->writeln($this->formatterHelper->formatBlock($message, 'bg='.$color, true));
     }
 
-    private function getLineNumber(ConstraintViolation $violation)
+    /** @internal */
+    public function getLineNumber(ConstraintViolation $violation)
     {
         if (!preg_match('/lines\[(\d+)\]/', $violation->getPropertyPath(), $matches)) {
             throw new \InvalidArgumentException(sprintf(
