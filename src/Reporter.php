@@ -12,10 +12,17 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
  */
 interface Reporter
 {
+    const UNKNOWN = -1;
     const SUCCESS = 0;
     const NOTICE  = 1;
     const WARNING = 2;
     const ERROR   = 4;
+
+    const VERBOSITY_NONE = 0;
+    const VERBOSITY_ERROR = 1;
+    const VERBOSITY_ALL = 2;
+
+    public function setVerbosity($level);
 
     /**
      * @return int One of the result constants

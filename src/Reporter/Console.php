@@ -6,6 +6,7 @@ use Docbot\Reporter;
 use Gnugat\Redaktilo\File;
 use Gnugat\Redaktilo\Text;
 use Symfony\Component\Console\Helper\FormatterHelper;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
@@ -19,24 +20,46 @@ class Console implements Reporter
 {
     /** @var OutputInterface */
     private $output;
+    /** @var OutputInterface */
+    private $cliOutput;
     /** @var FormatterHelper */
     private $formatterHelper;
+    private $verbosity = 1;
 
     public function __construct(OutputInterface $output)
     {
         $this->formatterHelper = new FormatterHelper();
-        $this->output = $output;
+        $this->cliOutput = $this->output = $output;
+    }
+
+    public function setVerbosity($level)
+    {
+        if ($level < 0 || $level > 4) {
+            throw new \InvalidArgumentException('Verbosity level '.$level.' unknown.');
+        }
+
+        if ($level === self::VERBOSITY_NONE) {
+            $this->output = new NullOutput();
+        }
+
+        $this->verbosity = $level;
     }
 
     public function handle(ConstraintViolationListInterface $constraintViolationList, Text $file)
     {
+        $errorCount = count($constraintViolationList);
+
         if ($file instanceof File) {
-            $this->printFilename($file);
+            if ($errorCount === 0 && $this->verbosity > self::VERBOSITY_ERROR) {
+                $this->printFilename($file);
+            }
         }
 
-        if (0 === $errorCount = count($constraintViolationList)) {
-            $this->output->writeln('');
-            $this->outputBlock('Perfect! No errors were found.');
+        if (0 === $errorCount) {
+            if ($this->verbosity > self::VERBOSITY_ERROR) {
+                $this->output->writeln('');
+                $this->outputBlock('Perfect! No errors were found.');
+            }
 
             return self::SUCCESS;
         }

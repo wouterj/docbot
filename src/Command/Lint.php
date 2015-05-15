@@ -2,6 +2,7 @@
 
 namespace Docbot\Command;
 
+use Docbot\Reporter;
 use Docbot\ServiceContainer\Extension as DocbotExtension;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use Gnugat\Redaktilo\EditorFactory;
@@ -36,16 +37,48 @@ class Lint extends Command
         ;
     }
 
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $level = Reporter::VERBOSITY_ERROR;
+
+        if ($output->isQuiet()) {
+            $level = Reporter::VERBOSITY_NONE;
+        } elseif ($output->isVeryVerbose()) {
+            $level = Reporter::VERBOSITY_ALL;
+        }
+
+        $this->getContainer()->get('reporter')->setVerbosity($level);
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $result = Reporter::UNKNOWN;
         $paths = $input->getArgument('path');
         foreach ($paths as $path) {
             if (is_file($path)) {
-                $this->lintFile($path, $input->getOption('types'));
+                $result = $this->lintFile($path, $input->getOption('types'));
             } else {
-                $this->lintDirectory($path, $input->getOption('types'), $input->getOption('ignore'));
+                $result = $this->lintDirectory($path, $input->getOption('types'), $input->getOption('ignore'));
             }
         }
+
+        if (!$output->isQuiet()) {
+            if ($result === Reporter::SUCCESS) {
+                $output->writeln(array(
+                    '<bg=green>                                   ',
+                    '  [OK] All documents are perfect!  ',
+                    '                                   </>',
+                ));
+            } else {
+                $output->writeln(array(
+                    '<bg=green>                                         ',
+                    '  [ERROR] Sorry, some errors were found  ',
+                    '                                         </>',
+                ));
+            }
+        }
+
+        return $result > -1 ? $result : 3;
     }
 
     private function lintFile($path, array $types)
@@ -64,14 +97,21 @@ class Lint extends Command
 
     private function lintDirectory($path, array $types, $ignore = null)
     {
+        $result = Reporter::UNKNOWN;
+
         $files = Finder::create()->files()->in($path);
         if (null !== $ignore) {
             $files->notName($ignore);
         }
 
         foreach ($files as $file) {
-            $this->lintFile($file, $types);
+            $r = $this->lintFile($file, $types);
+            if ($r > $result) {
+                $result = $r;
+            }
         }
+
+        return $result;
     }
 
     /** @return Container */
