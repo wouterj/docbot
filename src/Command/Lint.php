@@ -67,6 +67,7 @@ class Lint extends Command
                 '',
                 sprintf(
                     '<bg=%s>%-'.reset($this->getApplication()->getTerminalDimensions()).'s</>',
+                    $result === Reporter::SUCCESS ? 'green' : 'red',
                     $result === Reporter::SUCCESS
                         ? '[OK] All documents are perfect!'
                         : '[ERROR] Sorry, some errors were found'
