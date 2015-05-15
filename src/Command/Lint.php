@@ -63,19 +63,16 @@ class Lint extends Command
         }
 
         if (!$output->isQuiet()) {
-            if ($result === Reporter::SUCCESS) {
-                $output->writeln(array(
-                    '<bg=green>                                   ',
-                    '  [OK] All documents are perfect!  ',
-                    '                                   </>',
-                ));
-            } else {
-                $output->writeln(array(
-                    '<bg=green>                                         ',
-                    '  [ERROR] Sorry, some errors were found  ',
-                    '                                         </>',
-                ));
-            }
+            $output->writeln(array(
+                '',
+                sprintf(
+                    '<bg=%s>%-'.reset($this->getApplication()->getTerminalDimensions()).'s</>',
+                    $result === Reporter::SUCCESS
+                        ? '[OK] All documents are perfect!'
+                        : '[ERROR] Sorry, some errors were found'
+                ),
+                '',
+            ));
         }
 
         return $result > -1 ? $result : 3;
