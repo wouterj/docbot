@@ -2,6 +2,7 @@
 
 namespace Docbot\Reviewer;
 
+use Gnugat\Redaktilo\File;
 use Gnugat\Redaktilo\Text;
 
 /**
@@ -19,6 +20,14 @@ class TitleLevel extends Base
         5 => '"',
     );
     private $currentLevel = 1;
+    private $startLevelIsDetermined = false;
+
+    public function review(Text $file)
+    {
+        $this->startLevelIsDetermined = false;
+
+        parent::review($file);
+    }
 
     public function reviewLine($line, $lineNumber, Text $file)
     {
@@ -31,6 +40,13 @@ class TitleLevel extends Base
                 $this->addError('Only =, -, ~, . and " should be used as title underlines');
 
                 return;
+            }
+
+            // .inc files are allowed to start with a deeper level.
+            $isIncludedFile = $file instanceof File && preg_match('/\.inc/', $file->getFilename());
+            if ($isIncludedFile && !$this->startLevelIsDetermined) {
+                $this->startLevelIsDetermined = true;
+                $this->currentLevel = $level;
             }
 
             if ($level <= $this->currentLevel) {

@@ -43,4 +43,39 @@ class LineLengthSpec extends ReviewerBehaviour
             '    // but this should error, as it is longer than 80 characters long. Oh dear, what did I do?',
         )));
     }
+
+    function it_allows_definitions_to_exceed_72_characters(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
+            '**type**: ``string`` **default**: ``This is a long constraint error message, but it should be allowed.``',
+        )));
+    }
+
+    function it_removes_indentation_of_code_blocks(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
+            '    .. code-block:: php',
+            '',
+            '        // a line that is around 80 characters long, so there should not be an error here',
+        )));
+    }
+
+    function it_ignores_too_long_schemaLocation_lines(ExecutionContextInterface $context)
+    {
+        PredictThatReviewer::shouldNotReportAnyError($context);
+
+        $this->review(Text::fromArray(array(
+            '.. code-block:: xml',
+            '',
+            '    <?xml version="1.0" encoding="UTF-8"?>',
+            '    <srv:container xmlns="http://symfony.com/schema/dic/security"',
+            '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+            '        xmlns:srv="http://symfony.com/schema/dic/services"',
+            '        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">',
+        )));
+    }
 }

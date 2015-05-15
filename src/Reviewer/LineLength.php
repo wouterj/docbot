@@ -29,7 +29,7 @@ class LineLength extends Base
             }
 
             if (preg_match('/^\s{'.$this->inCodeBlock.'}/', $line)) {
-                if (strlen(trim($line)) > 85) {
+                if (strlen(trim($line)) > 85 && !preg_match('/^\w+:schemaLocation/', ltrim($line))) {
                     $this->addError('In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit');
                 }
 
@@ -40,6 +40,11 @@ class LineLength extends Base
         }
 
         if (strlen(rtrim($line)) < 72) {
+            return;
+        }
+
+        // exception: type definitions may exceed 72 character limit
+        if (substr($line, 0, 8) === '**type**') {
             return;
         }
 
