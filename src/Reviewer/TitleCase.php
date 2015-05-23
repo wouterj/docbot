@@ -64,7 +64,14 @@ class TitleCase extends Base
 
             $correctTitle = trim(ucfirst($correctTitle));
 
-            if ($correctTitle !== $titleText) {
+            if (ucfirst($correctTitle) !== $titleText) {
+                if (preg_match('/^[a-z]+ Field Type$/', trim($titleText))) {
+                    $correctTitle[0] = strtolower($correctTitle[0]);
+
+                    if ($correctTitle === $titleText) {
+                    }
+                }
+
                 $this->addError(
                     '(experimental) All words, except from closed-class words, have to be capitalized: "%correct_title%"',
                     array('%correct_title%' => $correctTitle),
