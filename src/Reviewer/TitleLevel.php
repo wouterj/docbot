@@ -31,7 +31,7 @@ class TitleLevel extends Base
 
     public function reviewLine($line, $lineNumber, Text $file)
     {
-        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line, $data)) {
+        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}$/', trim($line), $data)) {
             $character = $data[1];
 
             $level = array_search($character, $this->levels);

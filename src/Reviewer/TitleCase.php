@@ -29,7 +29,7 @@ class TitleCase extends Base
 
     public function reviewLine($line, $lineNumber, Text $file)
     {
-        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line)) {
+        if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}$/', trim($line))) {
             if ($lineNumber === 0) {
                 return;
             }
