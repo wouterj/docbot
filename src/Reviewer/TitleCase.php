@@ -65,11 +65,9 @@ class TitleCase extends Base
             $correctTitle = trim(ucfirst($correctTitle));
 
             if (ucfirst($correctTitle) !== $titleText) {
+                // exception: field type references start with a lowercase word
                 if (preg_match('/^[a-z]+ Field Type$/', trim($titleText))) {
-                    $correctTitle[0] = strtolower($correctTitle[0]);
-
-                    if ($correctTitle === $titleText) {
-                    }
+                    return;
                 }
 
                 $this->addError(
