@@ -30,6 +30,10 @@ class TitleCase extends Base
     public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/^([\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line)) {
+            if ($lineNumber === 0) {
+                return;
+            }
+
             $titleText = trim($file->getLine($lineNumber - 1));
 
             $words = explode(' ', $titleText);

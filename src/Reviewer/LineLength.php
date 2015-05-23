@@ -48,6 +48,10 @@ class LineLength extends Base
             return;
         }
 
+        if (substr($line, 0, 1) === '|' && substr($line, -1) === '|') {
+            return;
+        }
+
         if (false !== strpos(substr(rtrim($line), 71), ' ')) {
             $this->addError('A line should be wrapped after the first word that crosses the 72th character');
         }

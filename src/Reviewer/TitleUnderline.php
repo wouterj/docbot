@@ -16,6 +16,10 @@ class TitleUnderline extends Base
     public function reviewLine($line, $lineNumber, Text $file)
     {
         if (preg_match('/(^[\~\!\"\#\$\%\&\'\(\)\*\+,-.\\\\\/\:\;\<\=\>\?\@\[\]\^\_\`\{\|\}])\1{3,}/', $line)) {
+            if ($lineNumber === 0) {
+                return;
+            }
+
             $titleText = $file->getLine($lineNumber - 1);
 
             if (strlen(trim($titleText)) !== strlen(trim($line))) {

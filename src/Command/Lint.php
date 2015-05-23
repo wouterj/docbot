@@ -66,13 +66,12 @@ class Lint extends Command
             $output->writeln(array(
                 '',
                 sprintf(
-                    '<bg=%s>%-'.reset($this->getApplication()->getTerminalDimensions()).'s</>',
+                    '<bg=%s>%-'.(reset($this->getApplication()->getTerminalDimensions()) - 1).'s</>',
                     $result === Reporter::SUCCESS ? 'green' : 'red',
                     $result === Reporter::SUCCESS
-                        ? '[OK] All documents are perfect!'
-                        : '[ERROR] Sorry, some errors were found'
+                        ? ' [OK] All documents are perfect!'
+                        : ' [ERROR] Sorry, some errors were found'
                 ),
-                '',
             ));
         }
 

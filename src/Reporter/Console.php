@@ -50,7 +50,11 @@ class Console implements Reporter
         $errorCount = count($constraintViolationList);
 
         if ($file instanceof File) {
-            if ($errorCount === 0 && $this->verbosity > self::VERBOSITY_ERROR) {
+            if ($errorCount === 0) {
+                if ($this->verbosity === self::VERBOSITY_ALL) {
+                    $this->printFilename($file);
+                }
+            } elseif ($this->verbosity !== self::VERBOSITY_NONE) {
                 $this->printFilename($file);
             }
         }
