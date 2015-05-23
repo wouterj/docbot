@@ -21,7 +21,7 @@ class TrailingWhitespace extends Base
 
         if (rtrim($line) !== $line) {
             $this->addError('There should be no trailing whitespace at the end of a line');
-        } elseif (preg_match('/[\w.]\s{2,}\w/', $line)) {
+        } elseif (preg_match('/[\w.]\s{2,}\w/', $line) && !preg_match('/^[\w=]+$/', $file->getLine($line + 1))) {
             $this->addError('This line contains successive whitespaces');
         }
     }
