@@ -63,7 +63,7 @@ class Extension extends Base implements CompilerPassInterface
 
     private function loadCommands(ContainerBuilder $container)
     {
-        $definition = new Definition('Docbot\Command\lint');
+        $definition = new Definition('Docbot\Command\Lint');
         $definition->addTag(self::COMMAND_TAG);
         $container->setDefinition('command.lint', $definition);
     }
