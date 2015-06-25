@@ -20,7 +20,7 @@ class TitleCase extends Base
         // determiners
         'the', 'a', 'an', 'any', 'those', 'which', 'other', 'your',
         // prepositions
-        'to', 'from', 'at', 'with', 'of', 'in', 'between', 'inside', 'about', 'on',
+        'to', 'from', 'at', 'with', 'of', 'in', 'between', 'inside', 'about', 'on', 'after',
         // pronouns
         'you', 'them', 'we', 'she', 'who', 'that', 'this',
 
