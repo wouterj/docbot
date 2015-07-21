@@ -69,18 +69,6 @@ class Console implements Reporter
         }
 
         $currentLineNumber = 0;
-        $constraintViolationList = iterator_to_array($constraintViolationList);
-        $that = $this;
-        usort($constraintViolationList, function (ConstraintViolation $a, ConstraintViolation $b) use ($that) {
-            $aNumber = $that->getLineNumber($a);
-            $bNumber = $that->getLineNumber($b);
-
-            if ($aNumber === $bNumber) {
-                return 0;
-            }
-
-            return $aNumber > $bNumber ? 1 : -1;
-        });
 
         foreach ($constraintViolationList as $violation) {
             $lineNumber = $this->getLineNumber($violation);

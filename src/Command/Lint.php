@@ -6,6 +6,8 @@ use Docbot\Reporter;
 use Docbot\ServiceContainer\Extension as DocbotExtension;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use Gnugat\Redaktilo\EditorFactory;
+use SebastianBergmann\Diff\Parser;
+use SebastianBergmann\Git\Git;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,6 +23,8 @@ use Symfony\Component\Finder\Finder;
  */
 class Lint extends Command
 {
+    private $diff;
+
     public function __construct($name = null)
     {
         parent::__construct($name);
@@ -34,6 +38,7 @@ class Lint extends Command
             ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Where to put the output', 'cli')
             ->addOption('ignore', 'i', InputOption::VALUE_REQUIRED, 'Pattern to ignore files')
             ->addOption('types', 't', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'The reviewer types (available types: rst, doc, symfony)', array('rst', 'doc', 'symfony'))
+            ->addOption('diff', 'd', InputOption::VALUE_REQUIRED, 'The diff to review')
         ;
     }
 
@@ -48,6 +53,10 @@ class Lint extends Command
         }
 
         $this->getContainer()->get('reporter')->setVerbosity($level);
+
+        if ($input->getOption('diff')) {
+            $this->diff = $input->getOption('diff');
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -89,7 +98,7 @@ class Lint extends Command
         $file = EditorFactory::createEditor()->open($path);
         $violations = $container->get(DocbotExtension::DOCBOT_ID)->lint($file, $types);
 
-        return $container->get('reporter')->handle($violations, $file);
+        return $this->getReporter()->handle($violations, $file);
     }
 
     private function lintDirectory($path, array $types, $ignore = null)
@@ -115,5 +124,20 @@ class Lint extends Command
     private function getContainer()
     {
         return $this->getApplication()->getContainer();
+    }
+
+    private function getReporter()
+    {
+        if ($this->diff) {
+            list($commitA, $commitB) = explode('...', $this->diff, 2);
+            $git = new Git(getcwd());
+            $diffParser = new Parser();
+
+            $diff = $diffParser->parse($git->getDiff($commitA, $commitB));
+
+            return new Reporter\DiffFilter($this->getContainer()->get('reporter'), $diff);
+        }
+
+        return $this->getContainer()->get('reporter');
     }
 }
