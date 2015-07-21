@@ -7,4 +7,5 @@ namespace Docbot\Reviewer\Check;
  */
 class TitleCase extends Base
 {
+    public $payload = self::PAYLOAD_EXPERIMENTAL;
 }

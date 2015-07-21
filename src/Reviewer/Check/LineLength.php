@@ -7,4 +7,5 @@ namespace Docbot\Reviewer\Check;
  */
 class LineLength extends Base
 {
+    public $payload = self::PAYLOAD_EXPERIMENTAL;
 }

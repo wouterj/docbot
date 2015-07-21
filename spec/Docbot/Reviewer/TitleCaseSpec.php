@@ -13,7 +13,7 @@ class TitleCaseSpec extends ReviewerBehaviour
     {
         PredictThatReviewer::shouldReportError(
             $context, $builder,
-            '(experimental) All words, except from closed-class words, have to be capitalized: "%correct_title%"', 1,
+            'All words, except from closed-class words, have to be capitalized: "%correct_title%"', 1,
             array('%correct_title%' => 'A Wrong Capitalized Title of a Section')
         );
 

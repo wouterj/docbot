@@ -3,6 +3,7 @@
 namespace Docbot\Reporter;
 
 use Docbot\Reporter;
+use Docbot\Reviewer\Check\Base;
 use Gnugat\Redaktilo\File;
 use Gnugat\Redaktilo\Text;
 use Symfony\Component\Console\Helper\FormatterHelper;
@@ -82,7 +83,14 @@ class Console implements Reporter
             return $aNumber > $bNumber ? 1 : -1;
         });
 
+        $onlyExperimental = true;
         foreach ($constraintViolationList as $violation) {
+            if (Base::PAYLOAD_EXPERIMENTAL !== $violation->getConstraint()->payload) {
+                $onlyExperimental = $experimental = false;
+            } else {
+                $experimental = true;
+            }
+
             $lineNumber = $this->getLineNumber($violation);
             if ($lineNumber !== $currentLineNumber) {
                 $this->output->writeln('');
@@ -92,13 +100,13 @@ class Console implements Reporter
             }
 
             $indent = 3 + strlen($lineNumber);
-            $this->printError($violation, $indent);
+            $this->printError($violation, $experimental, $indent);
         }
 
         $this->output->writeln('');
         $this->outputBlock(sprintf('Found %d error%s.', $errorCount, $errorCount === 1 ? '' : 's'), false);
 
-        return self::ERROR;
+        return $onlyExperimental ? self::NOTICE : self::ERROR;
     }
 
     private function outputBlock($message, $success = true)
@@ -140,8 +148,8 @@ class Console implements Reporter
         $this->output->writeln('<comment>['.$lineNumber.']</comment> "'.$line.'"');
     }
 
-    private function printError(ConstraintViolation $violation, $indent)
+    private function printError(ConstraintViolation $violation, $experimental, $indent)
     {
-        $this->output->writeln(str_repeat(' ', $indent).'- <fg=red>'.$violation->getMessage().'</>');
+        $this->output->writeln(str_repeat(' ', $indent).'- <fg='.($experimental ? 'yellow' : 'red').'>'.($experimental ? '(experimental) ' : '').$violation->getMessage().'</>');
     }
 }
