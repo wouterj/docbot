@@ -71,7 +71,7 @@ class TitleCase extends Base
                 }
 
                 $this->addError(
-                    '(experimental) All words, except from closed-class words, have to be capitalized: "%correct_title%"',
+                    'All words, except from closed-class words, have to be capitalized: "%correct_title%"',
                     array('%correct_title%' => $correctTitle),
                     $lineNumber
                 );

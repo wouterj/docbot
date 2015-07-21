@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraint;
  */
 class Base extends Constraint
 {
+    const PAYLOAD_EXPERIMENTAL = 'experimental';
+
     public function getTargets()
     {
         return self::CLASS_CONSTRAINT;
