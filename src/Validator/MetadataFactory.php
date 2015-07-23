@@ -58,6 +58,7 @@ class MetadataFactory implements MetadataFactoryInterface
             'Docbot\Reviewer\Check\FaultyLiterals',
             'Docbot\Reviewer\Check\DirectiveWhitespace',
             'Docbot\Reviewer\Check\TitleUnderline',
+            'Docbot\Reviewer\Check\RefRoleSpacing',
         );
     }
 

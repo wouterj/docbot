@@ -8,7 +8,7 @@ class RefRoleSpacing extends Base
 {
     public function reviewLine($line, $lineNumber, Text $file)
     {
-        preg_match_all('/:ref:`(?P<label>[^<]+)(?P<ref><[^>]+>)`/', $line, $matches, PREG_SET_ORDER);
+        preg_match_all('/:(?:ref|doc):`(?P<label>[^<]+)(?P<ref><[^>]+>)`/', $line, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $reference) {
             if (substr($reference['label'], -1) !== ' ') {
