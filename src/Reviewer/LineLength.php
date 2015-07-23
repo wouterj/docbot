@@ -29,7 +29,7 @@ class LineLength extends Base
             }
 
             if (preg_match('/^\s{'.$this->inCodeBlock.'}/', $line)) {
-                if (strlen(trim($line)) > 85 && !preg_match('/^\w+:schemaLocation/', ltrim($line))) {
+                if ((strlen($line) - $this->inCodeBlock) > 85 && !preg_match('/^\w+:schemaLocation/', ltrim($line))) {
                     $this->addError('In order to avoid horizontal scrollbars, you should wrap the code on a 85 character limit');
                 }
 

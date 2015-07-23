@@ -26,7 +26,6 @@ class Extension extends Base implements CompilerPassInterface
     {
         $this->loadServices($container);
         $this->loadValidator($container);
-        $this->loadReporters($container);
         $this->loadCommands($container);
     }
 
@@ -44,21 +43,12 @@ class Extension extends Base implements CompilerPassInterface
         $definition
             ->setFactory(array('Symfony\Component\Validator\Validation', 'createValidatorBuilder'))
             ->addMethodCall('setMetadataFactory', array(new Reference('validator.metadata_factory')))
-            ->addMethodCall('setApiVersion', array(Validation::API_VERSION_2_5))
         ;
         $container->setDefinition('validator.builder', $definition);
 
         $definition = new Definition('Symfony\Component\Validator\Validator');
         $definition->setFactory(array(new Reference('validator.builder'), 'getValidator'));
         $container->setDefinition(self::VALIDATOR_ID, $definition);
-    }
-
-    private function loadReporters(ContainerBuilder $container)
-    {
-        $definition = new Definition('Docbot\Reporter\Console', array(new Reference(CliExtension::OUTPUT_ID)));
-        $container->setDefinition('reporter.console', $definition);
-
-        $container->setAlias('reporter', new Alias('reporter.console'));
     }
 
     private function loadCommands(ContainerBuilder $container)

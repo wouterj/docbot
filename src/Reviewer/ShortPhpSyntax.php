@@ -16,13 +16,18 @@ class ShortPhpSyntax extends Base
     public function reviewLine($line, $lineNumber, Text $file)
     {
         if ('.. code-block:: php' === trim($line)) {
+            $lineBefore = null;
             $lineBeforeNumber = $lineNumber;
-            while (true) {
+            while ($lineBeforeNumber > 0) {
                 $lineBefore = $file->getLine(--$lineBeforeNumber);
 
                 if (trim($lineBefore) !== '') {
                     break;
                 }
+            }
+
+            if (null === $lineBefore) {
+                return;
             }
 
             if (preg_match('/:$/', rtrim($lineBefore))) {

@@ -15,7 +15,7 @@ class SerialComma extends Base
 {
     public function reviewLine($line, $lineNumber, Text $file)
     {
-        if (preg_match('/(\w*), (and)/', $line, $matches)) {
+        if (preg_match('/(\w*), (and|or)/', $line, $matches)) {
             $this->addError(
                 'Serial (Oxford) comma\'s should be avoided: "[...] %word% %conjunction% [...]"',
                 array(
