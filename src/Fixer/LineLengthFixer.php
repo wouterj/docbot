@@ -43,14 +43,29 @@ class LineLengthFixer extends AbstractFixer
             return;
         }
 
-        $token->withValue($this->fixLineLength($token->content(), $token->offset()));
+        $token->withValue($this->fixLineLength($token));
     }
 
     private function fixLineLength($str, $offset = 0)
     {
+        $token = null;
+        if ($str instanceof Token) {
+            $token = $str;
+            $str = $token->content();
+            $offset = $token->offset();
+        }
         $maxLength = 72 - $offset;
 
         $lines = explode("\n", $str);
+        if (0 === count($lines)) {
+            return $str;
+        }
+
+        $indent = '';
+        if ($token && $token->isList()) {
+            preg_match('/^\S+\s+/', $lines[0], $matches);
+            $indent = str_repeat(' ', strlen($matches[0]));
+        }
         $fixedLines = [];
         $remainerOfPrevLine = '';
 
@@ -59,8 +74,9 @@ class LineLengthFixer extends AbstractFixer
             return $str;
         }
 
-        foreach ($lines as $line) {
-            $line = ($remainerOfPrevLine ? $remainerOfPrevLine.' ' : '').$line;
+        foreach ($lines as $i => $line) {
+            $line = (0 !== $i ? $indent : '').($remainerOfPrevLine ? $remainerOfPrevLine.' ' : '').ltrim($line);
+            $remainerOfPrevLine = '';
 
             if (strlen($line) > $maxLength) {
                 $remainer = substr($line, $maxLength);
@@ -77,7 +93,7 @@ class LineLengthFixer extends AbstractFixer
         }
 
         if ('' !== $remainerOfPrevLine) {
-            $fixedLines[] = $this->fixLineLength($remainerOfPrevLine);
+            $fixedLines[] = $this->fixLineLength($remainerOfPrevLine, $offset);
         }
 
         return implode("\n", $fixedLines);

@@ -71,6 +71,20 @@ RST
                 'Definitions are allowed to cross 72 characters'
             ],
 
+            [
+                <<<RST
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce purus justo, congue molestie laoreet id,
+  dapibus et ligula.
+RST
+                ,
+                <<<RST
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce purus justo,
+  congue molestie laoreet id, dapibus et ligula.
+RST
+                ,
+                'Lists are correctly indented'
+            ],
+
             /* fixme: implement code wrapping
             [
                 Text::fromString(<<<RST
