@@ -220,6 +220,15 @@ class Token
         return $this->isGivenType([self::INDENTED_LITERAL_BLOCK, self::QUOTED_LITERAL_BLOCK]);
     }
 
+    public function isCode()
+    {
+        return $this->isLiteralBlock()
+            || ($this->isGivenType(self::DIRECTIVE)
+               && false !== strpos($this->subTokens()[0]->contents(), '.. code-block::')
+            )
+        ;
+    }
+
     public function isTable()
     {
         return $this->isGivenType([self::GRID_TABLE, self::SIMPLE_TABLE]);
