@@ -6,8 +6,6 @@ use Symfony\CS\FixerInterface;
 
 abstract class FixerTestCase extends \PHPUnit_Framework_TestCase
 {
-    /** @var \SplFileObject */
-    private $file;
     /** @var FixerInterface */
     private $fixer;
 
