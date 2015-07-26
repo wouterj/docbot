@@ -305,7 +305,7 @@ class Lexer
          *         |                      |
          *         +----------------------+
          */
-        if ('..' === substr(ltrim($line), 0, 2)) {
+        if (preg_match('/^\s*\.\.(?:\s|$)/', $line)) {
             $value = [$line];
             $indent = self::getIndent($line);
 
@@ -373,6 +373,14 @@ class Lexer
         } else {
             self::prevIfNotStartOfFile($lines);
         }*/
+
+        /* Section Titles
+         */
+        if (preg_match('/^\s*([!"#$%&\'()*+,-.\/:;<=>?@[\]^_`{|}\~])\1+\s*$/', next($lines))) {
+            return Token::sectionTitle()->withValue($line."\n".current($lines));
+        } else {
+            prev($lines);
+        }
 
         /* Paragraphs
          *

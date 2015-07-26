@@ -23,6 +23,7 @@ namespace Docbot\Tokenizer;
  * @method static Token directiveArgument()
  * @method static Token directiveOption()
  * @method static Token directiveContent()
+ * @method static Token sectionTitle()
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
@@ -55,6 +56,8 @@ class Token
     const DIRECTIVE_ARGUMENT = 17;
     const DIRECTIVE_OPTION = 18;
     const DIRECTIVE_CONTENT = 19;
+    
+    const SECTION_TITLE = 20;
 
     private $type;
     private $value;

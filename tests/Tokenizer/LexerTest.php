@@ -7,6 +7,40 @@ use Docbot\Tokenizer\Token;
 
 class LexerTest extends \PHPUnit_Framework_TestCase
 {
+    public function testSection()
+    {
+        $tokens = Lexer::tokenize(<<<RST
+Hello
+=====
+
+Some Section
+----------------
+Paragraph of text.
+
+Other section
+~~~~~~~~
+
+Other text.
+RST
+        );
+        
+        $this->assertCount(8, $tokens);
+        
+        $this->assertTokenType($tokens[0], Token::SECTION_TITLE);
+        $this->assertTokenEquals($tokens[0], "Hello\n=====");
+        $this->assertTokenType($tokens[1], Token::WHITESPACE);
+        $this->assertTokenType($tokens[2], Token::SECTION_TITLE);
+        $this->assertTokenEquals($tokens[2], "Some Section\n----------------");
+        $this->assertTokenType($tokens[3], Token::PARAGRAPH);
+        $this->assertTokenEquals($tokens[3], 'Paragraph of text.');
+        $this->assertTokenType($tokens[4], Token::WHITESPACE);
+        $this->assertTokenType($tokens[5], Token::SECTION_TITLE);
+        $this->assertTokenEquals($tokens[5], "Other section\n~~~~~~~~");
+        $this->assertTokenType($tokens[6], Token::WHITESPACE);
+        $this->assertTokenType($tokens[7], Token::PARAGRAPH);
+        $this->assertTokenEquals($tokens[7], 'Other text.');
+    }
+    
     public function testDirective()
     {
         $tokens = Lexer::tokenize(<<<RST
