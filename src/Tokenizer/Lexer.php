@@ -8,7 +8,7 @@ namespace Docbot\Tokenizer;
 class Lexer
 {
     private $simpleNameRegex = '[-._+:]';
-    
+
     public static function tokenize($markup)
     {
         $markupLines = preg_split('/\R/', $markup);
@@ -17,20 +17,20 @@ class Lexer
         do {
             $blocks[] = self::getTokens(current($markupLines), $markupLines);
         } while (false !== next($markupLines));
-        
+
         return $blocks;
     }
-    
+
     private static function getTokens($line, &$lines)
     {
-        $simpleNameRegex = '[A-Za-z0-9]([A-Za-z0-9]|[-_+:.][A-Za-z0-9])*';
-        
+        $simpleNameRegex = '[A-Za-z0-9](?:[A-Za-z0-9]|[-_+:.][A-Za-z0-9])*';
+
         if (self::isBlank($line)) {
             return Token::whitespace()->withValue($line);
         }
-        
+
         /* Directives
-         * 
+         *
          * +-------+-------------------------------+
          * | ".. " | directive type "::" directive |
          * +-------+ block                         |
@@ -38,27 +38,59 @@ class Lexer
          *         +-------------------------------+
          */
         if (preg_match('/^(\s*)\.\.\s+'.$simpleNameRegex.'::(\s+|$)/', $line, $matches)) {
-            $value = [$line];
+            $directiveToken = Token::directive();
+            $directiveToken->withSubToken(Token::directiveMarker()->withValue($matches[0]));
+
+            if (strlen($line) > strlen($matches[1])) {
+                $directiveToken->withSubToken(Token::directiveArgument()->withValue(substr($line, strlen($matches[0]))));
+            }
+
+            $value = [];
             $startIndent = strlen($matches[1]);
-            
+            $first = true;
+
             while (
                 self::moveToNextLine($lines)
                 && (self::isBlank(current($lines))
                     || self::isIndentedHigher(current($lines), $startIndent)
                 )
             ) {
+                if (preg_match('/^\s+:('.$simpleNameRegex.'):\s(.*)$/', current($lines), $matches)) {
+                    $directiveToken->withSubToken(Token::directiveOption()->withValue([$matches[1], $matches[2]]));
+
+                    continue;
+                }
+
+                if ($first && self::isBlank(current($lines))) {
+                    $directiveToken->withSubToken(Token::whitespace()->withValue(current($lines)));
+                    $first = false;
+
+                    continue;
+                }
+
                 $value[] = current($lines);
             }
-            
+
             self::prevIfNotStartOfFile($lines);
-            
+
             self::prevIfLastLineIsBlank($lines, $value);
-            
-            return Token::directive()->withValue(implode("\n", $value)); 
+
+            if ($value) {
+                $indent = self::getIndent($value[0]);
+                $value = implode("\n", array_map(function ($v) use ($indent) { return substr($v, $indent); }, ($value)));
+                $contentToken = Token::directiveContent();
+                foreach (self::tokenize($value) as $token) {
+                    $contentToken->withSubToken($token->atOffset($indent));
+                }
+
+                $directiveToken->withSubToken($contentToken);
+            }
+
+            return $directiveToken;
         }
 
         /* Literal Blocks
-         * 
+         *
          * +------------------------------+
          * | paragraph                    |
          * | (ends with "::")             |
@@ -67,9 +99,9 @@ class Lexer
          *    | indented literal block    |
          *    +---------------------------+
          */
-        if ('::' === substr($l = self::getPrevUsefulLine($lines), -2)) {
+        if ('::' === substr($l = self::getPrevNonWhitespaceLine($lines), -2)) {
             $indent = self::getIndent($l);
-            
+
             if (self::isIndentedHigher($line, $indent)) {
                 $value = [$line];
 
@@ -84,6 +116,8 @@ class Lexer
 
                 self::prevIfLastLineIsBlank($lines, $value);
 
+                prev($lines);
+
                 return Token::create(Token::INDENTED_LITERAL_BLOCK)->withValue(implode("\n", $value));
             } elseif (preg_match('/\s{'.$indent.'}([!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}~])/', $line, $matches)) {
                 $type = 'literal_block';
@@ -94,18 +128,18 @@ class Lexer
                 ) {
                     $value .= "\n".current($lines);
                 }
-                
+
                 return Token::quotedLiteralBlock()->withValue($value);
             }
         }
 
         /* Bullet & Enumerated Lists
-         * 
+         *
          * +------+-----------------------+
          * | "- " | list item             |
          * +------| (body elements)+      |
          *        +-----------------------+
-         * 
+         *
          * +-------+----------------------+
          * | "1. " | list item            |
          * +-------| (body elements)+     |
@@ -113,7 +147,7 @@ class Lexer
          */
         if (
             // bullet lists
-            $bullet = preg_match('/^(\s*[*+-•?-]\s+)/', $line, $matches)
+            ($bullet = preg_match('/^(\s*[*+-•?-]\s+)/', $line, $matches))
             // enumerated lists
             || preg_match('/^(\s*(?:[0-9]+|[A-Z]|[IVXLCDM]{2,10})(?:\.|\))\s+)/i', $line, $matches)
         ) {
@@ -175,7 +209,7 @@ class Lexer
 
             return Token::simpleTable()->withValue($value);
         }
-        
+
         /* Block Quotes
          *
          * +------------------------------+
@@ -190,7 +224,7 @@ class Lexer
          *    |    (optional)             |
          *    +---------------------------+
          */
-        $indent = self::getIndent(self::getPrevUsefulLine($lines));
+        $indent = self::getIndent(self::getPrevNonWhitespaceLine($lines));
         if (self::isIndentedHigher($line, $indent)) {
             $value = [$line];
             $indent = self::getIndent($line);
@@ -202,7 +236,7 @@ class Lexer
                 )
             ) {
                 $value[] = current($lines);
-                
+
                 if (
                     false !== strpos(current($lines), '--')
                     || false !== strpos(current($lines), '—')
@@ -210,12 +244,12 @@ class Lexer
                     break;
                 }
             }
-            
+
             self::prevIfLastLineIsBlank($lines, $value);
-            
+
             return Token::blockQuote()->withValue(implode("\n", $value));
         }
-        
+
         /* Footnotes
          *
          * +-------+-------------------------+
@@ -227,7 +261,7 @@ class Lexer
         if (preg_match('/^(\s*)\.\.\s\[([0-9]+|#|\*|#'.$simpleNameRegex.')\]/', $line, $matches)) {
             $value = [$line];
             $indent = strlen($matches[1]) + 3;
-            
+
             while (
                 self::moveToNextLine($lines)
                 && (self::isBlank(current($lines))
@@ -236,12 +270,12 @@ class Lexer
             ) {
                 $value[] = current($lines);
             }
-            
+
             self::prevIfNotStartOfFile($lines);
-            
+
             return Token::footnote()->withValue(implode("\n", $value));
         }
-        
+
         /* Hyperlink Targets
          *
          * +-------+----------------------+
@@ -260,12 +294,12 @@ class Lexer
             ) {
                 $value .= "\n".current($lines);
             }
-            
+
             self::prevIfNotStartOfFile($lines);
-            
+
             return Token::hyperlinkTarget()->withValue($value);
         }
-        
+
         /* Comments
          *
          * +-------+----------------------+
@@ -277,7 +311,7 @@ class Lexer
         if ('..' === substr(ltrim($line), 0, 2)) {
             $value = [$line];
             $indent = self::getIndent($line);
-            
+
             if (
                 self::moveToNextLine($lines)
                 && (self::isBlank(current($lines))
@@ -301,7 +335,7 @@ class Lexer
             } else {
                 prev($lines);
             }
-            
+
             return Token::comment()->withValue(implode("\n", $value));
         }
 
@@ -334,18 +368,20 @@ class Lexer
 
             self::prevIfLastLineIsBlank($lines, $value);
 
+            prev($lines);
+
             return Token::definitionList()->withValue(implode("\n", $value));
         } else {
             self::prevIfNotStartOfFile($lines);
         }
-        
+
         /* Paragraphs
          *
          * +------------------------------+
          * | paragraph                    |
          * |                              |
          * +------------------------------+
-         * 
+         *
          * +------------------------------+
          * | paragraph                    |
          * |                              |
@@ -359,75 +395,77 @@ class Lexer
         ) {
             $value .= "\n".current($lines);
         }
-        
+
         self::prevIfNotStartOfFile($lines);
-        
+
         return Token::paragraph()->withValue($value);
     }
-    
+
     private static function moveToNextLine(&$lines)
     {
         return false !== next($lines);
     }
-    
+
     private static function moveToPrevLine(&$lines)
     {
         return false !== prev($lines);
     }
-    
+
     private static function prevIfNotStartOfFile(&$lines)
     {
         if (false !== current($lines)) {
             prev($lines);
         }
     }
-    
+
     private static function isBlank($line)
     {
         return '' === trim($line);
     }
-    
+
     private static function isIndentedEqually($line, $level)
     {
         return self::isIndentedBetween($line, $level, $level);
     }
-    
+
     private static function isIndentedEquallyOrHigher($line, $level)
     {
         return self::isIndentedBetween($line, $level);
     }
-    
+
     private static function isIndentedHigher($line, $level)
     {
         return self::isIndentedBetween($line, $level + 1);
     }
-    
+
     private static function isIndentedBetween($line, $start = 0, $end = null)
     {
         $repeat = $start.','.$end;
         if ($start === $end) {
             $repeat = $start;
         }
-        
+
         return (bool) preg_match('/^\s{'.$repeat.'}\S/', $line);
     }
-    
+
     private static function getIndent($line)
     {
         return strlen($line) - strlen(ltrim($line));
     }
-    
-    private static function getPrevUsefulLine($lines)
+
+    private static function getPrevNonWhitespaceLine($lines)
     {
         while (self::moveToPrevLine($lines) && self::isBlank(current($lines)));
-        
+
         return current($lines);
     }
-    
-    private static function prevIfLastLineIsBlank(&$lines, array $value)
+
+    private static function prevIfLastLineIsBlank(&$lines, array &$value)
     {
         if (self::isBlank($line = array_pop($value))) {
             self::prevIfNotStartOfFile($lines);
+        } else {
+            $value[] = $line;
         }
     }
 }
