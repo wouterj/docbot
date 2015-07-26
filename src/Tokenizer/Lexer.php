@@ -7,18 +7,16 @@ namespace Docbot\Tokenizer;
  */
 class Lexer
 {
-    private $simpleNameRegex = '[-._+:]';
-
     public static function tokenize($markup)
     {
         $markupLines = preg_split('/\R/', $markup);
 
-        $blocks = [];
+        $tokens = [];
         do {
-            $blocks[] = self::getTokens(current($markupLines), $markupLines);
+            $tokens[] = self::getTokens(current($markupLines), $markupLines);
         } while (false !== next($markupLines));
 
-        return $blocks;
+        return $tokens;
     }
 
     private static function getTokens($line, &$lines)
@@ -38,11 +36,10 @@ class Lexer
          *         +-------------------------------+
          */
         if (preg_match('/^(\s*)\.\.\s+'.$simpleNameRegex.'::(\s+|$)/', $line, $matches)) {
-            $directiveToken = Token::directive();
-            $directiveToken->withSubToken(Token::directiveMarker()->withValue($matches[0]));
+            $subTokens = [Token::directiveMarker()->withValue($matches[0])];
 
             if (strlen($line) > strlen($matches[1])) {
-                $directiveToken->withSubToken(Token::directiveArgument()->withValue(substr($line, strlen($matches[0]))));
+                $subTokens[] = Token::directiveArgument()->withValue(substr($line, strlen($matches[0])));
             }
 
             $value = [];
@@ -55,38 +52,39 @@ class Lexer
                     || self::isIndentedHigher(current($lines), $startIndent)
                 )
             ) {
-                if (preg_match('/^\s+:('.$simpleNameRegex.'):\s(.*)$/', current($lines), $matches)) {
-                    $directiveToken->withSubToken(Token::directiveOption()->withValue([$matches[1], $matches[2]]));
+                if (preg_match('/^\s+:'.$simpleNameRegex.':(?:\s.*)?$/', current($lines), $matches)) {
+                    $subTokens[] = Token::directiveOption()->withValue($matches[0]);
 
                     continue;
                 }
 
                 if ($first && self::isBlank(current($lines))) {
-                    $directiveToken->withSubToken(Token::whitespace()->withValue(current($lines)));
+                    $subTokens[] = Token::whitespace()->withValue(current($lines));
                     $first = false;
 
                     continue;
                 }
+                $first = false;
 
                 $value[] = current($lines);
             }
 
-            self::prevIfNotStartOfFile($lines);
-
             self::prevIfLastLineIsBlank($lines, $value);
+
+            prev($lines);
 
             if ($value) {
                 $indent = self::getIndent($value[0]);
                 $value = implode("\n", array_map(function ($v) use ($indent) { return substr($v, $indent); }, ($value)));
-                $contentToken = Token::directiveContent();
+                $contentSubTokens = [];
                 foreach (self::tokenize($value) as $token) {
-                    $contentToken->withSubToken($token->atOffset($indent));
+                    $contentSubTokens[] = $token->atOffset($indent);
                 }
 
-                $directiveToken->withSubToken($contentToken);
+                $subTokens[] = Token::directiveContent()->withSubTokens($contentSubTokens);
             }
 
-            return $directiveToken;
+            return Token::directive()->withSubTokens($subTokens);
         }
 
         /* Literal Blocks
@@ -120,7 +118,6 @@ class Lexer
 
                 return Token::create(Token::INDENTED_LITERAL_BLOCK)->withValue(implode("\n", $value));
             } elseif (preg_match('/\s{'.$indent.'}([!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}~])/', $line, $matches)) {
-                $type = 'literal_block';
                 $value = $line;
                 while (
                     self::moveToNextLine($lines)
@@ -147,7 +144,7 @@ class Lexer
          */
         if (
             // bullet lists
-            ($bullet = preg_match('/^(\s*[*+-•?-]\s+)/', $line, $matches))
+            ($bullet = preg_match('/^(\s*[*+-]\s+)/', $line, $matches))
             // enumerated lists
             || preg_match('/^(\s*(?:[0-9]+|[A-Z]|[IVXLCDM]{2,10})(?:\.|\))\s+)/i', $line, $matches)
         ) {
@@ -339,7 +336,9 @@ class Lexer
             return Token::comment()->withValue(implode("\n", $value));
         }
 
-        /* Definition Lists
+        /* fixme: this just takes other lines
+         *
+         * Definition Lists
          *
          * +----------------------------+
          * | term [ " : " classifier ]* |
@@ -347,7 +346,7 @@ class Lexer
          *    | definition                 |
          *    | (body elements)+           |
          *    +----------------------------+
-         */
+         *
         $indent = self::getIndent($line);
         if (
             self::moveToNextLine($lines)
@@ -366,14 +365,14 @@ class Lexer
                 $value[] = current($lines);
             }
 
-            self::prevIfLastLineIsBlank($lines, $value);
-
             prev($lines);
+
+            self::prevIfLastLineIsBlank($lines, $value);
 
             return Token::definitionList()->withValue(implode("\n", $value));
         } else {
             self::prevIfNotStartOfFile($lines);
-        }
+        }*/
 
         /* Paragraphs
          *

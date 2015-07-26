@@ -58,12 +58,13 @@ class Token
 
     private $type;
     private $value;
-    private $tokens = [];
-    private $indent;
+    private $tokens;
+    private $indent = 0;
 
     private function __construct($type)
     {
         $this->type = $type;
+        $this->tokens = Tokens::fromArray([]);
     }
 
     public static function create($type)
@@ -73,7 +74,7 @@ class Token
 
     public function withValue($value)
     {
-        if ($this->tokens) {
+        if (0 !== count($this->tokens)) {
             throw new \BadMethodCallException('A token cannot have a value and subtokens.');
         }
 
@@ -89,13 +90,18 @@ class Token
         return $this;
     }
 
-    public function withSubToken(Token $token)
+    /**
+     * @param Token[] $tokens
+     *
+     * @return $this
+     */
+    public function withSubTokens(array $tokens)
     {
         if (null !== $this->value) {
             throw new \BadMethodCallException('A token cannot have a value and subtokens.');
         }
 
-        $this->tokens[] = $token;
+        $this->tokens = Tokens::fromArray($tokens);
 
         return $this;
     }
@@ -142,11 +148,16 @@ class Token
     /**
      * The sub tokens of this token.
      *
-     * @return Token[]
+     * @return Tokens
      */
     public function subTokens()
     {
         return $this->tokens;
+    }
+
+    public function isCompound()
+    {
+        return 0 !== count($this->tokens);
     }
 
     /**
@@ -156,19 +167,31 @@ class Token
      */
     public function content()
     {
-        if ($this->value()) {
+        if (!$this->isCompound()) {
             return $this->value();
         }
 
-        return array_reduce($this->subTokens(), function (&$acc, Token $token) {
-            return $acc .= $token->content();
-        }, '');
+        $content = '';
+
+        foreach ($this->subTokens() as $token) {
+            if ($token->isGivenType(self::DIRECTIVE_ARGUMENT)) {
+                $content = rtrim($content, "\n\r").$token->value()."\n";
+
+                continue;
+            }
+
+            $content .= implode("\n", array_map(function ($line) use ($token) {
+                return str_repeat(' ', $token->offset()).$line;
+            }, explode("\n", $token->content())))."\n";
+        }
+
+        return substr($content, 0, -1);
     }
 
     /**
      * Checks whether this token has the given type(s).
      *
-     * @param string|array $type A single type or a list of types
+     * @param int|array $type A single type or a list of types
      *
      * @return bool
      */
@@ -176,7 +199,7 @@ class Token
     {
         if (is_array($type)) {
             foreach ($type as $t) {
-                if ($this->isOfType($t)) {
+                if ($this->isGivenType($t)) {
                     return true;
                 }
             }
@@ -185,6 +208,26 @@ class Token
         }
 
         return $this->type() === $type;
+    }
+
+    public function isList()
+    {
+        return $this->isGivenType([self::BULLET_LIST, self::ENUMERATED_LIST]);
+    }
+
+    public function isLiteralBlock()
+    {
+        return $this->isGivenType([self::INDENTED_LITERAL_BLOCK, self::QUOTED_LITERAL_BLOCK]);
+    }
+
+    public function isTable()
+    {
+        return $this->isGivenType([self::GRID_TABLE, self::SIMPLE_TABLE]);
+    }
+
+    public function isWhitespace()
+    {
+        return $this->isGivenType(self::WHITESPACE);
     }
 
     public function equals($other)

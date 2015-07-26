@@ -1,6 +1,6 @@
 <?php
 
-namespace WouterJ\Docbot\Test\Tokenizer;
+namespace Docbot\Test\Tokenizer;
 
 use Docbot\Tokenizer\Lexer;
 use Docbot\Tokenizer\Token;
@@ -16,21 +16,25 @@ class LexerTest extends \PHPUnit_Framework_TestCase
     The larch. Wikipedia says:
 
         Larches are conifers in the genus Larix, in the family Pinaceae.
+
+No longer in directive.
 RST
         );
 
-        $this->assertCount(1, $tokens);
-        /** @var Token $token */
-        $token = current($tokens);
+        $this->assertCount(3, $tokens);
 
-        $this->assertCount(5, $subTokens = $token->subTokens());
+        $this->assertTokenType($tokens[0], Token::DIRECTIVE);
+        $this->assertTokenType($tokens[1], Token::WHITESPACE);
+        $this->assertTokenType($tokens[2], Token::PARAGRAPH);
+
+        $this->assertCount(5, $subTokens = $tokens[0]->subTokens());
 
         $this->assertTokenType($subTokens[0], Token::DIRECTIVE_MARKER);
         $this->assertTokenEquals($subTokens[0], '.. figure:: ');
         $this->assertTokenType($subTokens[1], Token::DIRECTIVE_ARGUMENT);
         $this->assertTokenEquals($subTokens[1], 'larch.png');
         $this->assertTokenType($subTokens[2], Token::DIRECTIVE_OPTION);
-        $this->assertTokenEquals($subTokens[2], ['scale', '50']);
+        $this->assertTokenEquals($subTokens[2], '    :scale: 50');
         $this->assertTokenType($subTokens[3], Token::WHITESPACE);
 
         $this->assertTokenType($subTokens[4], Token::DIRECTIVE_CONTENT);
@@ -117,6 +121,8 @@ RST
 
     public function testDefinitionList()
     {
+        $this->markTestSkipped('Definition lists are not yet implemented');
+
         $tokens = Lexer::tokenize(<<<RST
 term 1
     Definition 1.
@@ -354,6 +360,6 @@ RST
 
     private function assertTokenEquals(Token $token, $value)
     {
-        $this->assertTrue($token->equals($value), "\nExpected value: ".json_encode($value)."\nActual value: ".json_encode($token->value()));
+        $this->assertTrue($token->equals($value), "\nExpected value: ".json_encode($value)."\nActual value:   ".json_encode($token->value()));
     }
 }
