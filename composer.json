@@ -25,6 +25,9 @@
     "autoload": {
         "psr-4": {"Docbot\\": "src"}
     },
+    "autoload-dev": {
+        "psr-4": {"Docbot\\Test\\": "tests"}
+    },
 
     "extra": {
         "branch-alias": {

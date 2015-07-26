@@ -1,6 +1,6 @@
 <?php
 
-namespace WouterJ\Docbot\Tests;
+namespace Docbot\Tests;
 
 use Docbot\Docbot;
 use Gnugat\Redaktilo\Text;
@@ -15,14 +15,14 @@ class DocbotTest extends \PHPUnit_Framework_TestCase
     private $docbot;
     /** @var Text */
     private $text;
-    
+
     protected function setUp()
     {
         $this->validator = $this->prophesize(ValidatorInterface::class);
         $this->docbot = new Docbot($this->validator->reveal());
         $this->text = $this->prophesize(Text::class)->reveal();
     }
-    
+
     public function testLintsFiles()
     {
         $this->validator->validate($this->text, Argument::cetera())->shouldBeCalled();
