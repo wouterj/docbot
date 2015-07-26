@@ -31,7 +31,7 @@ class DirectiveWhitespaceFixer extends AbstractFixer
             }
 
             $subTokens = $token->subTokens();
-            preg_match('/\.\.\s(.+?)::/', $subTokens[0]->value(), $matches);
+            preg_match('/\.\.\s(.+?)::/', $subTokens[0]->content(), $matches);
             $type = $matches[1];
 
             // move till the first token after the marker line + option lines

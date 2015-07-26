@@ -40,7 +40,7 @@ class UnstyledDirectivesFixer extends AbstractFixer
                 }
 
                 return $matches[1].$this->unstyledDirectivesReplacement[$matches[2]].$matches[3];
-            }, $marker->value()));
+            }, $marker->content()));
         }
 
         return $tokens->generateMarkup();

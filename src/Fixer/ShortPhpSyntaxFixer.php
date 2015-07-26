@@ -24,7 +24,7 @@ class ShortPhpSyntaxFixer extends AbstractFixer
 
             $subTokens = $token->subTokens();
             if (
-                false === strpos($subTokens[0]->value(), '.. code-block::')
+                false === strpos($subTokens[0]->content(), '.. code-block::')
                 || ($subTokens[1]->isGivenType(Token::DIRECTIVE_ARGUMENT) && !$subTokens[1]->equals('php'))
             ) {
                 continue;
@@ -36,8 +36,8 @@ class ShortPhpSyntaxFixer extends AbstractFixer
                 continue;
             }
 
-            if (':' === substr(rtrim($prevToken->value()), -1)) {
-                $prevToken->withValue(preg_replace('/(?<!:):\s*$/', '::', $prevToken->value()));
+            if (':' === substr(rtrim($prevToken->content()), -1)) {
+                $prevToken->withValue(preg_replace('/(?<!:):\s*$/', '::', $prevToken->content()));
 
                 $tokens->removeAt($index);
                 $tokens->insertAt($index, Token::indentedLiteralBlock()->withValue($token->subTokens()->findGivenKind(Token::DIRECTIVE_CONTENT)->content()));

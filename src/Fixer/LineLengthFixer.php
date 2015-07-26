@@ -43,7 +43,7 @@ class LineLengthFixer extends AbstractFixer
             return;
         }
 
-        $token->withValue($this->fixLineLength($token->value(), $token->offset()));
+        $token->withValue($this->fixLineLength($token->content(), $token->offset()));
     }
 
     private function fixLineLength($str, $offset = 0)
