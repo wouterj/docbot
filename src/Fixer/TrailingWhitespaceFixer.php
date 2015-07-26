@@ -2,6 +2,8 @@
 
 namespace Docbot\Fixer;
 
+use Docbot\Tokenizer\Token;
+use Docbot\Tokenizer\Tokens;
 use Symfony\CS\AbstractFixer;
 
 /**
@@ -12,18 +14,27 @@ class TrailingWhitespaceFixer extends AbstractFixer
     /** @inheritDoc */
     public function fix(\SplFileInfo $file, $content)
     {
-        preg_match('/\R/', $content, $matches);
-        
-        $lines = preg_split('/\R/', $content);
-        
-        $lines = array_map(function ($line) {
-            if (0 === strlen($line)) {
-                return;
+        /** @var Token[]|Tokens $tokens */
+        $tokens = Tokens::fromMarkup($content);
+
+        foreach ($tokens as $token) {
+            $this->fixToken($token);
+        }
+
+        return $tokens->generateMarkup();
+    }
+
+    private function fixToken(Token $token)
+    {
+        if ($token->isCompound()) {
+            foreach ($token->subTokens() as $token) {
+                $this->fixToken($token);
             }
 
-            $line = rtrim($line);
-            $line = preg_replace('/[\w.]\s{2,}\w/', ' ', $line);
-        }, $lines);
+            return;
+        }
+
+        $token->withValue(preg_replace('/\s+$/m', '', $token->value()));
     }
 
     /** @inheritDoc */
