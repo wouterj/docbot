@@ -14,9 +14,8 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
  */
 class ContainerFactory
 {
-    private $extensions = array('Docbot\ServiceContainer\Extension');
+    private $extensions = array(DocbotExtension::class);
     private $passes = array();
-    private $config = array();
 
     public function addCompiler(CompilerPassInterface $compilerPass)
     {

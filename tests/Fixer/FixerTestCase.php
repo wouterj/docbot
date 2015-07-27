@@ -18,7 +18,7 @@ abstract class FixerTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @dataProvider getExamples */
-    public function testFix($input, $expected, $message, $file = null)
+    public function testFix($input, $expected, $message = null, $file = null)
     {
         $this->assertEquals($expected, $this->fixer->fix(new \SplFileObject($file ?: __DIR__.'/../Fixtures/fixer.txt'), $input), $message);
     }

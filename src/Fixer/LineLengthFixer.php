@@ -25,6 +25,12 @@ class LineLengthFixer extends AbstractFixer
 
     private function fixToken(Token $token)
     {
+        if ($token->isCode()) {
+            // todo: 85 character limit for code blocks
+
+            return;
+        }
+        
         if ($token->isCompound()) {
             foreach ($token->subTokens() as $subToken) {
                 $this->fixToken($subToken);
@@ -34,12 +40,6 @@ class LineLengthFixer extends AbstractFixer
         }
 
         if ($token->isTable() || $token->isWhitespace()) {
-            return;
-        }
-
-        if ($token->isLiteralBlock() /* && is_code_block_directive */) {
-            // todo: 85 character limit for code blocks
-
             return;
         }
 

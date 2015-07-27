@@ -5,9 +5,10 @@ namespace Docbot\ServiceContainer;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Alias;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Extension\Extension as Base;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
@@ -15,10 +16,12 @@ use Symfony\Component\DependencyInjection\Reference;
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class CliExtension extends Base
+class CliExtension extends Extension implements CompilerPassInterface
 {
     const INPUT_ID = 'cli.input';
     const OUTPUT_ID = 'cli.output';
+
+    const COMMAND_TAG = 'command';
 
     private $input;
     private $output;
@@ -44,5 +47,27 @@ class CliExtension extends Base
         $container->setDefinition('reporter.console', $definition);
 
         $container->setAlias('reporter', new Alias('reporter.console'));
+    }
+
+    /** {@inheritdoc} */
+    public function process(ContainerBuilder $container)
+    {
+        $this->registerCommands($container);
+    }
+    
+    private function registerCommands(ContainerBuilder $container)
+    {
+        if ($container->hasParameter('console.commands')) {
+            $commands = array();
+        } else {
+            $commands = array();
+        }
+
+        $commandServiceIds = array_keys($container->findTaggedServiceIds(self::COMMAND_TAG));
+        foreach ($commandServiceIds as $commandServiceId) {
+            $commands[] = $commandServiceId;
+        }
+
+        $container->setParameter('console.commands', $commands);
     }
 }

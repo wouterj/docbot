@@ -64,19 +64,50 @@ RST
         $this->assertNull($tokens->findGivenKind(Token::FOOTNOTE));
     }
 
-    public function testGenerateMarkup()
+    /** @dataProvider getMarkups */
+    public function testGenerateMarkup($input, $expected = null)
     {
-        $markup = <<<RST
+        if (null === $expected) {
+            $expected = $input;
+        }
+        
+        $tokens = Tokens::fromMarkup($input);
+
+        $this->assertEquals($expected, $tokens->generateMarkup());
+    }
+    
+    public function getMarkups()
+    {
+        return [
+            [
+                <<<RST
 Some text.
 
-.. see-also::
+.. seealso::
 
     Check out this link_!
 
 .. _link: http://symfony.com/
-RST;
-        $tokens = Tokens::fromMarkup($markup);
+RST
+            ],
+            
+            [
+                <<<RST
+.. sidebar:: Some Title
 
-        $this->assertEquals($markup, $tokens->generateMarkup());
+    Some text::
+
+        echo 'hello';
+RST
+            ],
+            
+            [
+                <<<RST
+A little sentence::
+
+    echo 'hello';
+RST
+            ],
+        ];
     }
 }

@@ -75,11 +75,69 @@ RST
         $contentToken = $subTokens[4];
         $this->assertCount(3, $contentSubTokens = $contentToken->subTokens());
         $this->assertTokenType($contentSubTokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($contentSubTokens[0], 'The larch. Wikipedia says:');
         $this->assertEquals(4, $contentSubTokens[0]->offset());
+        $this->assertTokenEquals($contentSubTokens[0], '    The larch. Wikipedia says:');
         $this->assertTokenType($contentSubTokens[1], Token::WHITESPACE);
         $this->assertTokenType($contentSubTokens[2], Token::BLOCK_QUOTE);
-        $this->assertTokenEquals($contentSubTokens[2], '    Larches are conifers in the genus Larix, in the family Pinaceae.');
+        $this->assertTokenEquals($contentSubTokens[2], '        Larches are conifers in the genus Larix, in the family Pinaceae.');
+    }
+    
+    public function testNestedDirective()
+    {
+        $tokens = Lexer::tokenize(<<<RST
+.. configuration-block::
+
+    .. code-block:: php
+    
+        echo 'Hello';
+        
+    .. code-block:: ruby
+    
+        puts 'Hello'
+RST
+        );
+        
+        $this->assertCount(1, $tokens);
+        
+        $this->assertTokenType($tokens[0], Token::DIRECTIVE);
+        
+        $subTokens = $tokens[0]->subTokens();
+        $this->assertCount(3, $subTokens);
+        
+        $this->assertTokenType($subTokens[0], Token::DIRECTIVE_MARKER);
+        $this->assertTokenType($subTokens[1], Token::WHITESPACE);
+        $this->assertTokenType($subTokens[2], Token::DIRECTIVE_CONTENT);
+        
+        $contentSubTokens = $subTokens[2]->subTokens();
+        $this->assertCount(3, $contentSubTokens);
+        
+        $this->assertTokenType($contentSubTokens[0], Token::DIRECTIVE);
+        $this->assertEquals(4, $contentSubTokens[0]->offset());
+        $this->assertTokenType($contentSubTokens[1], Token::WHITESPACE);
+        $this->assertTokenType($contentSubTokens[2], Token::DIRECTIVE);
+        $this->assertEquals(4, $contentSubTokens[2]->offset());
+        
+        $phpDirectiveSubTokens = $contentSubTokens[0]->subTokens();
+        $this->assertCount(4, $phpDirectiveSubTokens);
+        
+        $this->assertTokenType($phpDirectiveSubTokens[0], Token::DIRECTIVE_MARKER);
+        $this->assertTokenEquals($phpDirectiveSubTokens[0], '.. code-block:: ');
+        $this->assertTokenType($phpDirectiveSubTokens[1], Token::DIRECTIVE_ARGUMENT);
+        $this->assertTokenEquals($phpDirectiveSubTokens[1], 'php');
+        $this->assertTokenType($phpDirectiveSubTokens[2], Token::WHITESPACE);
+        $this->assertTokenType($phpDirectiveSubTokens[3], Token::DIRECTIVE_CONTENT);
+        $this->assertTokenEquals($phpDirectiveSubTokens[3], '    echo \'Hello\';');
+        
+        $rubyDirectiveSubTokens = $contentSubTokens[2]->subTokens();
+        $this->assertCount(4, $rubyDirectiveSubTokens);
+
+        $this->assertTokenType($rubyDirectiveSubTokens[0], Token::DIRECTIVE_MARKER);
+        $this->assertTokenEquals($rubyDirectiveSubTokens[0], '.. code-block:: ');
+        $this->assertTokenType($rubyDirectiveSubTokens[1], Token::DIRECTIVE_ARGUMENT);
+        $this->assertTokenEquals($rubyDirectiveSubTokens[1], 'ruby');
+        $this->assertTokenType($rubyDirectiveSubTokens[2], Token::WHITESPACE);
+        $this->assertTokenType($rubyDirectiveSubTokens[3], Token::DIRECTIVE_CONTENT);
+        $this->assertTokenEquals($rubyDirectiveSubTokens[3], '    puts \'Hello\'');
     }
 
     public function testParagraph()
@@ -196,12 +254,14 @@ RST
         $this->assertTokenEquals($tokens[0], 'This is a code example::');
         $this->assertTokenType($tokens[1], Token::WHITESPACE);
         $this->assertTokenType($tokens[2], Token::INDENTED_LITERAL_BLOCK);
+        $this->assertEquals(4, $tokens[2]->offset());
         $this->assertTokenEquals($tokens[2], '    echo \'Hello!\';');
         $this->assertTokenType($tokens[3], Token::WHITESPACE);
         $this->assertTokenType($tokens[4], Token::PARAGRAPH);
         $this->assertTokenEquals($tokens[4], '::');
         $this->assertTokenType($tokens[5], Token::WHITESPACE);
         $this->assertTokenType($tokens[6], Token::INDENTED_LITERAL_BLOCK);
+        $this->assertEquals(4, $tokens[6]->offset());
         $this->assertTokenEquals($tokens[6], "    # only say good morning if it's morning\n\n    puts 'Good morning' if morning");
     }
 
@@ -394,6 +454,6 @@ RST
 
     private function assertTokenEquals(Token $token, $value)
     {
-        $this->assertTrue($token->equals($value), "\nExpected value: ".json_encode($value)."\nActual value:   ".json_encode($token->value()));
+        $this->assertTrue($token->equals($value), "\nExpected content: ".json_encode($value)."\nActual content:   ".json_encode($token->content()));
     }
 }

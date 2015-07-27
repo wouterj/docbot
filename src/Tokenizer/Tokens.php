@@ -121,6 +121,19 @@ class Tokens extends \SplFixedArray
     public function getPrevTokenOfKind()
     {
     }
+    
+    public function last()
+    {
+        $this->rewind();
+        
+        $last = null;
+        while ($this->valid()) {
+            $last = $this->current();
+            $this->next();
+        }
+        
+        return $last;
+    }
 
     public function findSequence()
     {

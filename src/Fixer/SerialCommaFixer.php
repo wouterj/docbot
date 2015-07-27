@@ -37,7 +37,7 @@ class SerialCommaFixer extends AbstractFixer
             return;
         }
 
-        $lines = explode("\n", $token->content());
+        $lines = explode("\n", $token->value());
         $fixedLines = [];
         $i = 0;
         foreach ($lines as $line) {

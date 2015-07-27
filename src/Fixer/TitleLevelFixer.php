@@ -17,6 +17,7 @@ class TitleLevelFixer extends AbstractFixer
         3 => '~',
         4 => '.',
         5 => '"',
+        6 => '*',
     );
     
     /** @inheritDoc */
@@ -25,6 +26,7 @@ class TitleLevelFixer extends AbstractFixer
         /** @var Token[]|Tokens $tokens */
         $tokens = Tokens::fromMarkup($content);
         $currentLevel = 1;
+        $firstTitle = true;
         $startLevelIsDetermined = false;
         
         foreach ($tokens as $token) {
@@ -32,12 +34,14 @@ class TitleLevelFixer extends AbstractFixer
                 continue;
             }
             
+            $isFirstTitle = $firstTitle;
+            $firstTitle = false;
             list($title, $underline) = explode("\n", $token->content());
 
             $level = array_search(ltrim($underline)[0], $this->levels);
-
+            
             if (false === $level) {
-                $character = $this->levels[1 === $currentLevel ? 1 : ++$currentLevel];
+                $character = $this->levels[$isFirstTitle ? 1 : ($currentLevel == 6 ? 6 : ++$currentLevel)];
                 $underline = str_repeat($character, strlen($underline));
                 
                 $token->withValue($title."\n".$underline);
@@ -51,20 +55,16 @@ class TitleLevelFixer extends AbstractFixer
                 $startLevelIsDetermined = true;
                 $currentLevel = $level;
             }
-
+            
             if ($level <= $currentLevel) {
                 $currentLevel = $level;
 
                 continue;
             }
-
-            if ($currentLevel + 1 !== $level) {
-                $underline = str_repeat($this->levels[$currentLevel + 1], strlen($underline));
-                
-                $token->withValue($title."\n".$underline);
-            }
             
-            $currentLevel = $level;
+            $underline = str_repeat($this->levels[++$currentLevel], strlen($underline));
+                
+            $token->withValue($title."\n".$underline);
         }
         
         return $tokens->generateMarkup();

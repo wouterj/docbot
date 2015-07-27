@@ -2,19 +2,18 @@
 
 namespace Docbot\Command;
 
-use Docbot\Reporter;
-use Docbot\ServiceContainer\Extension as DocbotExtension;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use Gnugat\Redaktilo\EditorFactory;
-use SebastianBergmann\Diff\Parser;
-use SebastianBergmann\Git\Git;
+use Docbot\Docbot;
+use Docbot\ServiceContainer\DocbotExtension as DocbotExtension;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\CS\FixerFileProcessedEvent;
 
 /**
  * This commands lints documentation files.
@@ -24,6 +23,8 @@ use Symfony\Component\Finder\Finder;
 class Lint extends Command
 {
     private $diff;
+    /** @var Filesystem */
+    private $filesystem;
 
     public function __construct($name = null)
     {
@@ -44,16 +45,8 @@ class Lint extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $level = Reporter::VERBOSITY_ERROR;
-
-        if ($output->isQuiet()) {
-            $level = Reporter::VERBOSITY_NONE;
-        } elseif ($output->isVeryVerbose()) {
-            $level = Reporter::VERBOSITY_ALL;
-        }
-
-        $this->getContainer()->get('reporter')->setVerbosity($level);
-
+        $this->filesystem = new Filesystem();
+        
         if ($input->getOption('diff')) {
             $this->diff = $input->getOption('diff');
         }
@@ -61,83 +54,89 @@ class Lint extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $result = Reporter::UNKNOWN;
-        $paths = $input->getArgument('path');
-        foreach ($paths as $path) {
+        $style = new SymfonyStyle($input, $output);
+        
+        $style->title('Docbot\'s Review');
+        
+        $files = array();
+        $directories = array();
+        foreach ($input->getArgument('path') as $path) {
+            if (null !== $path) {
+                if (!$this->filesystem->isAbsolutePath($path)) {
+                    $path = getcwd().DIRECTORY_SEPARATOR.$path;
+                }
+            }
+            
             if (is_file($path)) {
-                $result = $this->lintFile($path, $input->getOption('types'));
-            } else {
-                $result = $this->lintDirectory($path, $input->getOption('types'), $input->getOption('ignore'));
+                $files[] = $path;
+            } elseif (null !== $path) {
+                $directories[] = $path;
             }
         }
-
-        if (!$output->isQuiet()) {
-            $output->writeln(array(
-                '',
-                sprintf(
-                    '<bg=%s>%-'.(reset($this->getApplication()->getTerminalDimensions()) - 1).'s</>',
-                    $result === Reporter::SUCCESS ? 'green' : 'red',
-                    $result === Reporter::SUCCESS
-                        ? ' [OK] All documents are perfect!'
-                        : ' [ERROR] Sorry, some errors were found'
-                ),
-            ));
+        
+        /** @var Docbot $docbot */
+        $docbot = $this->getContainer()->get(DocbotExtension::DOCBOT_ID);
+        
+        $config = $this->getContainer()->get(DocbotExtension::CONFIG_ID);
+        if (0 === count($directories)) {
+            $config->finder(new \ArrayIterator(array_map(function ($filename) {
+                return new \SplFileInfo($filename);
+            }, $files)));
+        } elseif (0 === count($files)) {
+            $config->finder(Finder::create()->files()->in($directories));
+        } else {
+            throw new \InvalidArgumentException(
+                'Can only fix either one or more files, or one or more directories, but a mix of files and directories given'
+            );
         }
+        
+        $docbot->listen(FixerFileProcessedEvent::NAME, function (FixerFileProcessedEvent $event) use ($style) {
+            $statusString = $event->getStatusAsString();
+            
+            switch ($statusString) {
+                case 'I':
+                case 'E':
+                    $style->write('<fg=red>'.$statusString.'</>');
+                    break;
+                    
+                case '.':
+                    $style->write('<fg=green>.</>');
+                    break;
+                    
+                case 'F':
+                    $style->write('<fg=yellow>F</>');
+                    break;
+                    
+                default:
+                    $style->write($statusString);
+            }
+        });
+        
+        $result = $docbot->fix($config);
+        
+        $output->writeln('');
+        
+        if ($output->isVeryVerbose()) {
+            $output->writeln('');
+            
+            $style->section('Full Report');
 
-        return $result > -1 ? $result : 3;
-    }
+            foreach ($result as $file => $r) {
+                $output->writeln([
+                    rtrim($this->filesystem->makePathRelative($file, getcwd()), '/\\'),
+                    ''
+                ]);
 
-    private function lintFile($path, array $types)
-    {
-        if ($path instanceof \SplFileInfo) {
-            $path = $path->getPathname();
-        }
-
-        $container = $this->getContainer();
-
-        $file = EditorFactory::createEditor()->open($path);
-        $violations = $container->get(DocbotExtension::DOCBOT_ID)->lint($file, $types);
-
-        return $this->getReporter()->handle($violations, $file);
-    }
-
-    private function lintDirectory($path, array $types, $ignore = null)
-    {
-        $result = Reporter::UNKNOWN;
-
-        $files = Finder::create()->files()->in($path);
-        if (null !== $ignore) {
-            $files->notName($ignore);
-        }
-
-        foreach ($files as $file) {
-            $r = $this->lintFile($file, $types);
-            if ($r > $result) {
-                $result = $r;
+                foreach ($r['appliedFixers'] as $fixer) {
+                    $output->writeln('- '.$fixer);
+                }
             }
         }
-
-        return $result;
     }
 
     /** @return Container */
     private function getContainer()
     {
         return $this->getApplication()->getContainer();
-    }
-
-    private function getReporter()
-    {
-        if ($this->diff) {
-            list($commitA, $commitB) = explode('...', $this->diff, 2);
-            $git = new Git(getcwd());
-            $diffParser = new Parser();
-
-            $diff = $diffParser->parse($git->getDiff($commitA, $commitB));
-
-            return new Reporter\DiffFilter($this->getContainer()->get('reporter'), $diff);
-        }
-
-        return $this->getContainer()->get('reporter');
     }
 }

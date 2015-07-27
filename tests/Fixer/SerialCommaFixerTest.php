@@ -37,6 +37,22 @@ class SerialCommaFixerTest extends FixerTestCase
                 'If you have an apple, and you are hungry, you can eat it.',
                 'Not all commas before conjunctions'
             ],
+            
+            [
+                <<<RST
+.. note::
+
+    One is not two, three, or four.
+RST
+                ,
+                <<<RST
+.. note::
+
+    One is not two, three or four.
+RST
+                ,
+                'Things are also fixed inside directives'
+            ],
         ];
     }
 }

@@ -170,8 +170,20 @@ class Token
      */
     public function content()
     {
+        $indent = function ($value, $level) {
+            return implode(
+                "\n",
+                array_map(
+                    function ($line) use ($level) {
+                        return ($line ? str_repeat(' ', $level) : '').$line;
+                    },
+                    explode("\n", $value)
+                )
+            );
+        };
+        
         if (!$this->isCompound()) {
-            return $this->value();
+            return $indent($this->value(), $this->offset());
         }
 
         $content = '';
@@ -182,13 +194,11 @@ class Token
 
                 continue;
             }
-
-            $content .= implode("\n", array_map(function ($line) use ($token) {
-                return str_repeat(' ', $token->offset()).$line;
-            }, explode("\n", $token->content())))."\n";
+            
+            $content .= $indent($token->content(), $this->offset())."\n";
         }
 
-        return substr($content, 0, -1);
+        return rtrim($content, "\n\r");
     }
 
     /**
@@ -227,7 +237,7 @@ class Token
     {
         return $this->isLiteralBlock()
             || ($this->isGivenType(self::DIRECTIVE)
-               && false !== strpos($this->subTokens()[0]->contents(), '.. code-block::')
+               && false !== strpos($this->subTokens()[0]->content(), '.. code-block::')
             )
         ;
     }

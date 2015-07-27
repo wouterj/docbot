@@ -20,7 +20,12 @@ class TrailingWhitespaceFixer extends AbstractFixer
         foreach ($tokens as $token) {
             $this->fixToken($token);
         }
-
+        
+        
+        if (!$tokens->last()->isWhitespace()) {
+            $tokens->insertAt($tokens->key(), Token::whitespace());
+        }
+        
         return $tokens->generateMarkup();
     }
 
@@ -33,8 +38,12 @@ class TrailingWhitespaceFixer extends AbstractFixer
 
             return;
         }
+        
+        if ($token->isGivenType(Token::DIRECTIVE_MARKER)) {
+            return;
+        }
 
-        $token->withValue(preg_replace('/\s+$/m', '', $token->value()));
+        $token->withValue(preg_replace('/\h+$/m', '', $token->value()));
     }
 
     /** @inheritDoc */

@@ -7,8 +7,21 @@ namespace Docbot\Tokenizer;
  */
 class Lexer
 {
+    private static $cache = [];
+    
+    public static function clearCache()
+    {
+        self::$cache = [];
+    }
+    
     public static function tokenize($markup)
     {
+        $hash = crc32($markup);
+        
+        if (isset(self::$cache[$hash])) {
+            return self::$cache[$hash];
+        }
+        
         $markupLines = preg_split('/\R/', $markup);
 
         $tokens = [];
@@ -38,7 +51,7 @@ class Lexer
         if (preg_match('/^(\s*)\.\.\s+'.$simpleNameRegex.'::(\s+|$)/', $line, $matches)) {
             $subTokens = [Token::directiveMarker()->withValue($matches[0])];
 
-            if (strlen($line) > strlen($matches[1])) {
+            if (strlen($line) > strlen($matches[0])) {
                 $subTokens[] = Token::directiveArgument()->withValue(substr($line, strlen($matches[0])));
             }
 
@@ -76,12 +89,18 @@ class Lexer
             if ($value) {
                 $indent = self::getIndent($value[0]);
                 $value = implode("\n", array_map(function ($v) use ($indent) { return substr($v, $indent); }, ($value)));
-                $contentSubTokens = [];
-                foreach (self::tokenize($value) as $token) {
-                    $contentSubTokens[] = $token->atOffset($indent);
+                $contentToken = Token::directiveContent();
+                
+                if (false === strpos($subTokens[0]->value(), '.. code-block::')) {
+                    $contentSubTokens = [];
+                    foreach (self::tokenize($value) as $t) {
+                        $contentSubTokens[] = $t->atOffset($t->offset() + $indent);
+                    }
+                    
+                    $subTokens[] = $contentToken->withSubTokens($contentSubTokens);
+                } else {
+                    $subTokens[] = $contentToken->atOffset($indent)->withValue($value);
                 }
-
-                $subTokens[] = Token::directiveContent()->withSubTokens($contentSubTokens);
             }
 
             return Token::directive()->withSubTokens($subTokens);
@@ -115,8 +134,13 @@ class Lexer
                 self::prevIfLastLineIsBlank($lines, $value);
 
                 prev($lines);
+                
+                $indent = self::getIndent($line);
+                $value = array_map(function ($v) use ($indent) {
+                    return substr($v, $indent);
+                }, $value);
 
-                return Token::create(Token::INDENTED_LITERAL_BLOCK)->withValue(implode("\n", $value));
+                return Token::create(Token::INDENTED_LITERAL_BLOCK)->atOffset($indent)->withValue(implode("\n", $value));
             } elseif (preg_match('/\s{'.$indent.'}([!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}~])/', $line, $matches)) {
                 $value = $line;
                 while (
