@@ -172,19 +172,23 @@ class Lexer
             // enumerated lists
             || preg_match('/^(\s*(?:[0-9]+|[A-Z]|[IVXLCDM]{2,10})(?:\.|\))\s+)/i', $line, $matches)
         ) {
-            $value = $line;
+            $value = [$line];
             $indent = strlen($matches[1]);
 
             while (
                 self::moveToNextLine($lines)
-                && self::isIndentedEqually(current($lines), $indent)
+                && (self::isBlank(current($lines))
+                    || self::isIndentedEquallyOrHigher(current($lines), $indent)
+                )
             ) {
-                $value .= "\n".current($lines);
+                $value[] = current($lines);
             }
+            
+            self::prevIfLastLineIsBlank($lines, $value);
 
             self::prevIfNotStartOfFile($lines);
 
-            return Token::create($bullet ? Token::BULLET_LIST : Token::ENUMERATED_LIST)->withValue($value);
+            return Token::create($bullet ? Token::BULLET_LIST : Token::ENUMERATED_LIST)->withValue(implode("\n", $value));
         }
 
         /* Grid Tables

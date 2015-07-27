@@ -167,10 +167,13 @@ RST
 - List item 2
 - List item 3
   with multi-line text
+- List item 4
+
+      With a Block Quote
 RST
         );
 
-        $this->assertCount(4, $tokens);
+        $this->assertCount(5, $tokens);
 
         $this->assertTokenType($tokens[0], Token::BULLET_LIST);
         $this->assertTokenEquals($tokens[0], '- List item 1');
@@ -179,6 +182,8 @@ RST
         $this->assertTokenEquals($tokens[2], '- List item 2');
         $this->assertTokenType($tokens[3], Token::BULLET_LIST);
         $this->assertTokenEquals($tokens[3], "- List item 3\n  with multi-line text");
+        $this->assertTokenType($tokens[4], Token::BULLET_LIST);
+        $this->assertTokenEquals($tokens[4], "- List item 4\n\n      With a Block Quote");
     }
 
     public function testEnumeratedList()
