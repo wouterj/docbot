@@ -251,8 +251,8 @@ class Lexer
          */
         $indent = self::getIndent(self::getPrevNonWhitespaceLine($lines));
         if (self::isIndentedHigher($line, $indent)) {
-            $value = [$line];
             $indent = self::getIndent($line);
+            $value = [substr($line, $indent)];
 
             while (
                 self::moveToNextLine($lines)
@@ -260,7 +260,7 @@ class Lexer
                     || self::isIndentedEquallyOrHigher(current($lines), $indent)
                 )
             ) {
-                $value[] = current($lines);
+                $value[] = substr(current($lines), $indent);
 
                 if (
                     false !== strpos(current($lines), '--')
@@ -272,7 +272,7 @@ class Lexer
 
             self::prevIfLastLineIsBlank($lines, $value);
 
-            return Token::blockQuote()->withValue(implode("\n", $value));
+            return Token::blockQuote()->withValue(implode("\n", $value))->atOffset($indent);
         }
 
         /* Footnotes

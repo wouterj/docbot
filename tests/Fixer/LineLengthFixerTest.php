@@ -85,6 +85,28 @@ RST
                 'Lists are correctly indented'
             ],
 
+            [
+                <<<RST
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce purus justo, congue molestie laoreet id,
+  dapibus et ligula.
+
+  .. code-block:: php
+
+      echo 'Hello!'
+RST
+                ,
+                <<<RST
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce purus justo,
+  congue molestie laoreet id, dapibus et ligula.
+
+  .. code-block:: php
+
+      echo 'Hello!'
+RST
+                ,
+                'Lists are correctly indented'
+            ],
+
             /* fixme: implement code wrapping
             [
                 Text::fromString(<<<RST

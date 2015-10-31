@@ -311,12 +311,14 @@ RST
         $this->assertTokenEquals($tokens[0], 'Now comes a block quote.');
         $this->assertTokenType($tokens[1], Token::WHITESPACE);
         $this->assertTokenType($tokens[2], Token::BLOCK_QUOTE);
+        $this->assertEquals(4, $tokens[2]->offset());
         $this->assertTokenEquals($tokens[2], "    \"It is my business to know things.  That is my trade.\"\n\n    -- Sherlock Holmes");
         $this->assertTokenType($tokens[3], Token::WHITESPACE);
         $this->assertTokenType($tokens[4], Token::PARAGRAPH);
         $this->assertTokenEquals($tokens[4], 'Another one.');
         $this->assertTokenType($tokens[5], Token::WHITESPACE);
         $this->assertTokenType($tokens[6], Token::BLOCK_QUOTE);
+        $this->assertEquals(4, $tokens[6]->offset());
         $this->assertTokenEquals($tokens[6], '    Block quote 2');
     }
 

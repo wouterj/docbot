@@ -70,12 +70,12 @@ RST
         if (null === $expected) {
             $expected = $input;
         }
-        
+
         $tokens = Tokens::fromMarkup($input);
 
         $this->assertEquals($expected, $tokens->generateMarkup());
     }
-    
+
     public function getMarkups()
     {
         return [
@@ -90,7 +90,7 @@ Some text.
 .. _link: http://symfony.com/
 RST
             ],
-            
+
             [
                 <<<RST
 .. sidebar:: Some Title
@@ -100,14 +100,38 @@ RST
         echo 'hello';
 RST
             ],
-            
+
             [
                 <<<RST
-A little sentence::
+* Route names are used for template names;
 
-    echo 'hello';
+* ``500`` errors are now managed correctly;
+
+* Request attributes are extracted to keep our templates simple::
+
+      <!-- example.com/src/pages/hello.php -->
+
+      Hello <?php echo htmlspecialchars(\$name, ENT_QUOTES, 'UTF-8') ?>
+
+* Route configuration has been moved to its own file:
+
+  .. code-block:: php
+
+      // example.com/src/app.php
+
+      use Symfony\Component\Routing;
+
+      \$routes = new Routing\RouteCollection();
+      \$routes->add('hello', new Routing\Route('/hello/{name}', array('name' => 'World')));
+      \$routes->add('bye', new Routing\Route('/bye'));
+
+      return \$routes;
+
+  We now have a clear separation between the configuration (everything
+  specific to our application in ``app.php``) and the framework (the generic
+  code that powers our application in ``front.php``).
 RST
-            ],
+            ]
         ];
     }
 }
