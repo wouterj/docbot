@@ -19,7 +19,7 @@ class TitleLevelFixer extends AbstractFixer
         5 => '"',
         6 => '*',
     );
-    
+
     /** @inheritDoc */
     public function fix(\SplFileInfo $file, $content)
     {
@@ -28,24 +28,24 @@ class TitleLevelFixer extends AbstractFixer
         $currentLevel = 1;
         $firstTitle = true;
         $startLevelIsDetermined = false;
-        
+
         foreach ($tokens as $token) {
-            if (!$token->isGivenType(Token::SECTION_TITLE)) {
+            if (!$token->isGivenType(Token::HEADLINE_UNDERLINE)) {
                 continue;
             }
-            
+
             $isFirstTitle = $firstTitle;
             $firstTitle = false;
-            list($title, $underline) = explode("\n", $token->content());
+            $underline = $token->value();
 
             $level = array_search(ltrim($underline)[0], $this->levels);
-            
+
             if (false === $level) {
                 $character = $this->levels[$isFirstTitle ? 1 : ($currentLevel == 6 ? 6 : ++$currentLevel)];
                 $underline = str_repeat($character, strlen($underline));
-                
-                $token->withValue($title."\n".$underline);
-                
+
+                $token->withValue($underline);
+
                 continue;
             }
 
@@ -55,18 +55,18 @@ class TitleLevelFixer extends AbstractFixer
                 $startLevelIsDetermined = true;
                 $currentLevel = $level;
             }
-            
+
             if ($level <= $currentLevel) {
                 $currentLevel = $level;
 
                 continue;
             }
-            
+
             $underline = str_repeat($this->levels[++$currentLevel], strlen($underline));
-                
-            $token->withValue($title."\n".$underline);
+
+            $token->withValue($underline);
         }
-        
+
         return $tokens->generateMarkup();
     }
 

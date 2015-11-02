@@ -16,43 +16,65 @@ class DirectiveWhitespaceFixer extends AbstractFixer
     {
         /** @var Token[]|Tokens $tokens */
         $tokens = Tokens::fromMarkup($content);
+        $token = $tokens->current();
+        $index = 0;
 
-        foreach ($tokens as $index => $token) {
-            if (!$token->isGivenType(Token::DIRECTIVE) && !$token->isLiteralBlock()) {
+        do {
+            if (!$token->isGivenType(Token::DIRECTIVE_MARKER) && !$token->isLiteralBlock()) {
                 continue;
             }
 
             if ($token->isLiteralBlock()) {
                 if (!$tokens[$index - 1]->isWhitespace()) {
-                    $tokens->insertAt($index, Token::whitespace());
+                    $tokens->insertAt($index, Token::whitespace()->withValue("\n"));
+                }
+                if (!$tokens[$index - 2]->isWhitespace()) {
+                    $tokens->insertAt($index, Token::whitespace()->withValue("\n"));
                 }
 
                 continue;
             }
 
-            $subTokens = $token->subTokens();
-            preg_match('/\.\.\s(.+?)::/', $subTokens[0]->content(), $matches);
+            preg_match('/\.\.\s(.+?)::/', $token->value(), $matches);
             $type = $matches[1];
 
             // move till the first token after the marker line + option lines
-            while ($subTokens->current()->isGivenType([Token::DIRECTIVE_MARKER, Token::DIRECTIVE_ARGUMENT, Token::DIRECTIVE_OPTION])) {
-                $subTokens->next();
-            }
+            while ($tokens->current()->isGivenType([Token::DIRECTIVE_MARKER, Token::DIRECTIVE_ARGUMENT, Token::DIRECTIVE_OPTION, Token::WHITESPACE])) {
+                $tokens->next();
+            };
+
+            $whitespaceLines = 0;
 
             if ('index' === $type || 'versionadded' === $type) {
-                if ($subTokens->current()->isWhitespace()) {
-                    $subTokens->removeAt($subTokens->key());
+                $i = $tokens->key() - 1;
+
+                for (; $i >= 0; $i--) {
+                    if (!$tokens[$i]->isWhitespace()) {
+                        break;
+                    }
+
+                    if (++$whitespaceLines > 1) {
+                        $tokens->removeAt($i);
+                    }
+                }
+            } else {
+                $i = $tokens->key() - 1;
+
+                for (; $i >= 0; $i--) {
+                    if (!$tokens[$i]->isWhitespace()) {
+                        break;
+                    }
+
+                    if (++$whitespaceLines > 2) {
+                        $tokens->removeAt($i);
+                    }
                 }
 
-                continue;
+                if ($whitespaceLines < 2) {
+                    $tokens->insertAt($tokens->key(), Token::whitespace()->withValue("\n"));
+                }
             }
-
-            if ($subTokens->current()->isWhitespace()) {
-                continue;
-            }
-
-            $subTokens->insertAt($subTokens->key(), Token::whitespace());
-        }
+        } while (false !== ($token = $tokens->moveNext()) && ++$index);
 
         return $tokens->generateMarkup();
     }

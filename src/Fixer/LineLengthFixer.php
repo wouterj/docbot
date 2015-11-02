@@ -30,14 +30,6 @@ class LineLengthFixer extends AbstractFixer
 
             return;
         }
-        
-        if ($token->isCompound()) {
-            foreach ($token->subTokens() as $subToken) {
-                $this->fixToken($subToken);
-            }
-
-            return;
-        }
 
         if ($token->isTable() || $token->isWhitespace()) {
             return;
@@ -51,7 +43,7 @@ class LineLengthFixer extends AbstractFixer
         $token = null;
         if ($str instanceof Token) {
             $token = $str;
-            $str = $token->content();
+            $str = $token->value();
             $offset = $token->offset();
         }
         $maxLength = 72 - $offset;
@@ -63,6 +55,8 @@ class LineLengthFixer extends AbstractFixer
 
         $indent = '';
         if ($token && $token->isList()) {
+            // todo, implement lists
+            return implode("\n", $lines);
             preg_match('/^\S+\s+/', $lines[0], $matches);
             $indent = str_repeat(' ', strlen($matches[0]));
         }

@@ -16,18 +16,19 @@ class TitleUnderlineFixer extends AbstractFixer
     {
         /** @var Token[]|Tokens $tokens */
         $tokens = Tokens::fromMarkup($content);
-        
-        foreach ($tokens as $token) {
-            if (!$token->isGivenType(Token::SECTION_TITLE)) {
+
+        foreach ($tokens as $i => $token) {
+            if (!$token->isGivenType(Token::HEADLINE_UNDERLINE)) {
                 continue;
             }
-            
-            list($title, $underline) = explode("\n", $token->content());
+
+            $title = $tokens[$tokens->getPrevNonWhitespace()]->value();
+            $underline = $token->value();
             $newUnderline = str_repeat($underline[0], strlen($title));
-            
-            $token->withValue($title."\n".$newUnderline);
+
+            $token->withValue($newUnderline);
         }
-        
+
         return $tokens->generateMarkup();
     }
 

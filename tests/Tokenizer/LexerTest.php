@@ -7,9 +7,16 @@ use Docbot\Tokenizer\Token;
 
 class LexerTest extends \PHPUnit_Framework_TestCase
 {
-    public function testSection()
+    private $lexer;
+
+    protected function setUp()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $this->lexer = new Lexer();
+    }
+
+    public function testHeadlines()
+    {
+        $tokens = $this->lexer->tokenize(<<<RST
 Hello
 =====
 
@@ -23,126 +30,117 @@ Other section
 Other text.
 RST
         );
-        
-        $this->assertCount(8, $tokens);
-        
-        $this->assertTokenType($tokens[0], Token::SECTION_TITLE);
-        $this->assertTokenEquals($tokens[0], "Hello\n=====");
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::SECTION_TITLE);
-        $this->assertTokenEquals($tokens[2], "Some Section\n----------------");
-        $this->assertTokenType($tokens[3], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[3], 'Paragraph of text.');
-        $this->assertTokenType($tokens[4], Token::WHITESPACE);
-        $this->assertTokenType($tokens[5], Token::SECTION_TITLE);
-        $this->assertTokenEquals($tokens[5], "Other section\n~~~~~~~~");
-        $this->assertTokenType($tokens[6], Token::WHITESPACE);
-        $this->assertTokenType($tokens[7], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[7], 'Other text.');
+
+        $this->assertTokens([
+            ['HEADLINE', 'Hello'],
+            ['WHITESPACE', "\n"],
+            ['HEADLINE_UNDERLINE', '====='],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['HEADLINE', 'Some Section'],
+            ['WHITESPACE', "\n"],
+            ['HEADLINE_UNDERLINE', '----------------'],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'Paragraph of text.'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['HEADLINE', 'Other section'],
+            ['WHITESPACE', "\n"],
+            ['HEADLINE_UNDERLINE', '~~~~~~~~'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'Other text.'],
+        ], $tokens);
     }
-    
+
     public function testDirective()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 .. figure:: larch.png
     :scale: 50
 
-    The larch. Wikipedia says:
-
-        Larches are conifers in the genus Larix, in the family Pinaceae.
+    The larch. Wikipedia says.
 
 No longer in directive.
 RST
         );
 
-        $this->assertCount(3, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::DIRECTIVE);
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::PARAGRAPH);
-
-        $this->assertCount(5, $subTokens = $tokens[0]->subTokens());
-
-        $this->assertTokenType($subTokens[0], Token::DIRECTIVE_MARKER);
-        $this->assertTokenEquals($subTokens[0], '.. figure:: ');
-        $this->assertTokenType($subTokens[1], Token::DIRECTIVE_ARGUMENT);
-        $this->assertTokenEquals($subTokens[1], 'larch.png');
-        $this->assertTokenType($subTokens[2], Token::DIRECTIVE_OPTION);
-        $this->assertTokenEquals($subTokens[2], '    :scale: 50');
-        $this->assertTokenType($subTokens[3], Token::WHITESPACE);
-
-        $this->assertTokenType($subTokens[4], Token::DIRECTIVE_CONTENT);
-        $contentToken = $subTokens[4];
-        $this->assertCount(3, $contentSubTokens = $contentToken->subTokens());
-        $this->assertTokenType($contentSubTokens[0], Token::PARAGRAPH);
-        $this->assertEquals(4, $contentSubTokens[0]->offset());
-        $this->assertTokenEquals($contentSubTokens[0], '    The larch. Wikipedia says:');
-        $this->assertTokenType($contentSubTokens[1], Token::WHITESPACE);
-        $this->assertTokenType($contentSubTokens[2], Token::BLOCK_QUOTE);
-        $this->assertTokenEquals($contentSubTokens[2], '        Larches are conifers in the genus Larix, in the family Pinaceae.');
+        $this->assertTokens([
+            ['DIRECTIVE_MARKER', '.. figure::'],
+            ['WHITESPACE', ' '],
+            ['DIRECTIVE_ARGUMENT', 'larch.png'],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_OPTION', ':scale: 50', 4],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'The larch. Wikipedia says.', 4],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_END', null],
+            ['PARAGRAPH', 'No longer in directive.'],
+        ], $tokens);
     }
-    
+
+    public function testDirectiveWithoutSpacing()
+    {
+        $tokens = $this->lexer->tokenize(<<<RST
+.. versionadded:: 2.5
+    A cool new feature.
+RST
+        );
+
+        $this->assertTokens([
+            ['DIRECTIVE_MARKER', '.. versionadded::'],
+            ['WHITESPACE', ' '],
+            ['DIRECTIVE_ARGUMENT', '2.5'],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'A cool new feature.', 4],
+            ['DIRECTIVE_END', null],
+        ], $tokens);
+    }
+
     public function testNestedDirective()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 .. configuration-block::
 
     .. code-block:: php
-    
+
         echo 'Hello';
-        
+
     .. code-block:: ruby
-    
+
         puts 'Hello'
 RST
         );
-        
-        $this->assertCount(1, $tokens);
-        
-        $this->assertTokenType($tokens[0], Token::DIRECTIVE);
-        
-        $subTokens = $tokens[0]->subTokens();
-        $this->assertCount(3, $subTokens);
-        
-        $this->assertTokenType($subTokens[0], Token::DIRECTIVE_MARKER);
-        $this->assertTokenType($subTokens[1], Token::WHITESPACE);
-        $this->assertTokenType($subTokens[2], Token::DIRECTIVE_CONTENT);
-        
-        $contentSubTokens = $subTokens[2]->subTokens();
-        $this->assertCount(3, $contentSubTokens);
-        
-        $this->assertTokenType($contentSubTokens[0], Token::DIRECTIVE);
-        $this->assertEquals(4, $contentSubTokens[0]->offset());
-        $this->assertTokenType($contentSubTokens[1], Token::WHITESPACE);
-        $this->assertTokenType($contentSubTokens[2], Token::DIRECTIVE);
-        $this->assertEquals(4, $contentSubTokens[2]->offset());
-        
-        $phpDirectiveSubTokens = $contentSubTokens[0]->subTokens();
-        $this->assertCount(4, $phpDirectiveSubTokens);
-        
-        $this->assertTokenType($phpDirectiveSubTokens[0], Token::DIRECTIVE_MARKER);
-        $this->assertTokenEquals($phpDirectiveSubTokens[0], '.. code-block:: ');
-        $this->assertTokenType($phpDirectiveSubTokens[1], Token::DIRECTIVE_ARGUMENT);
-        $this->assertTokenEquals($phpDirectiveSubTokens[1], 'php');
-        $this->assertTokenType($phpDirectiveSubTokens[2], Token::WHITESPACE);
-        $this->assertTokenType($phpDirectiveSubTokens[3], Token::DIRECTIVE_CONTENT);
-        $this->assertTokenEquals($phpDirectiveSubTokens[3], '    echo \'Hello\';');
-        
-        $rubyDirectiveSubTokens = $contentSubTokens[2]->subTokens();
-        $this->assertCount(4, $rubyDirectiveSubTokens);
 
-        $this->assertTokenType($rubyDirectiveSubTokens[0], Token::DIRECTIVE_MARKER);
-        $this->assertTokenEquals($rubyDirectiveSubTokens[0], '.. code-block:: ');
-        $this->assertTokenType($rubyDirectiveSubTokens[1], Token::DIRECTIVE_ARGUMENT);
-        $this->assertTokenEquals($rubyDirectiveSubTokens[1], 'ruby');
-        $this->assertTokenType($rubyDirectiveSubTokens[2], Token::WHITESPACE);
-        $this->assertTokenType($rubyDirectiveSubTokens[3], Token::DIRECTIVE_CONTENT);
-        $this->assertTokenEquals($rubyDirectiveSubTokens[3], '    puts \'Hello\'');
+        $this->assertTokens([
+            ['DIRECTIVE_MARKER', '.. configuration-block::'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_MARKER', '.. code-block::', 4],
+            ['WHITESPACE', ' '],
+            ['DIRECTIVE_ARGUMENT', 'php'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'echo \'Hello\';', 8],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_END', null],
+            ['DIRECTIVE_MARKER', '.. code-block::', 4],
+            ['WHITESPACE', ' '],
+            ['DIRECTIVE_ARGUMENT', 'ruby'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'puts \'Hello\'', 8],
+            ['DIRECTIVE_END', null],
+            ['DIRECTIVE_END', null],
+        ], $tokens);
     }
 
     public function testParagraph()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 Let's write a novel.
 This is the same paragraph.
 
@@ -150,18 +148,17 @@ And this a new one!
 RST
         );
 
-        $this->assertCount(3, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[0], "Let's write a novel.\nThis is the same paragraph.");
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[2], 'And this a new one!');
+        $this->assertTokens([
+            ['PARAGRAPH', "Let's write a novel.\nThis is the same paragraph."],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'And this a new one!'],
+        ], $tokens);
     }
 
     public function testBulletList()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 - List item 1
 
 - List item 2
@@ -173,22 +170,21 @@ RST
 RST
         );
 
-        $this->assertCount(5, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::BULLET_LIST);
-        $this->assertTokenEquals($tokens[0], '- List item 1');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::BULLET_LIST);
-        $this->assertTokenEquals($tokens[2], '- List item 2');
-        $this->assertTokenType($tokens[3], Token::BULLET_LIST);
-        $this->assertTokenEquals($tokens[3], "- List item 3\n  with multi-line text");
-        $this->assertTokenType($tokens[4], Token::BULLET_LIST);
-        $this->assertTokenEquals($tokens[4], "- List item 4\n\n      With a Block Quote");
+        $this->assertTokens([
+            ['BULLET_LIST', '- List item 1'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['BULLET_LIST', '- List item 2'],
+            ['WHITESPACE', "\n"],
+            ['BULLET_LIST', "- List item 3\n  with multi-line text"],
+            ['WHITESPACE', "\n"],
+            ['BULLET_LIST', "- List item 4\n\n      With a Block Quote"],
+        ], $tokens);
     }
 
     public function testEnumeratedList()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 1. Enumerated List
 9999. Enumerated List
       with multi-line
@@ -200,20 +196,19 @@ AA. normal paragraph
 RST
         );
 
-        $this->assertCount(7, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::ENUMERATED_LIST);
-        $this->assertTokenEquals($tokens[0], '1. Enumerated List');
-        $this->assertTokenType($tokens[1], Token::ENUMERATED_LIST);
-        $this->assertTokenEquals($tokens[1], "9999. Enumerated List\n      with multi-line");
-        $this->assertTokenType($tokens[2], Token::ENUMERATED_LIST);
-        $this->assertTokenEquals($tokens[2], 'A) Enumerated List');
-        $this->assertTokenType($tokens[3], Token::WHITESPACE);
-        $this->assertTokenType($tokens[4], Token::ENUMERATED_LIST);
-        $this->assertTokenEquals($tokens[4], 'MCMLIV. Enumerated List');
-        $this->assertTokenType($tokens[5], Token::WHITESPACE);
-        $this->assertTokenType($tokens[6], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[6], 'AA. normal paragraph');
+        $this->assertTokens([
+            ['ENUMERATED_LIST', '1. Enumerated List'],
+            ['WHITESPACE', "\n"],
+            ['ENUMERATED_LIST', "9999. Enumerated List\n      with multi-line"],
+            ['WHITESPACE', "\n"],
+            ['ENUMERATED_LIST', 'A) Enumerated List'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['ENUMERATED_LIST', 'MCMLIV. Enumerated List'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'AA. normal paragraph'],
+        ], $tokens);
     }
 
     public function testDefinitionList()
@@ -240,10 +235,10 @@ RST
 
     public function testIndentedLiteralBlock()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 This is a code example::
 
-    echo 'Hello!';
+    puts 'Hello!'
 
 ::
 
@@ -253,26 +248,23 @@ This is a code example::
 RST
         );
 
-        $this->assertCount(7, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[0], 'This is a code example::');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::INDENTED_LITERAL_BLOCK);
-        $this->assertEquals(4, $tokens[2]->offset());
-        $this->assertTokenEquals($tokens[2], '    echo \'Hello!\';');
-        $this->assertTokenType($tokens[3], Token::WHITESPACE);
-        $this->assertTokenType($tokens[4], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[4], '::');
-        $this->assertTokenType($tokens[5], Token::WHITESPACE);
-        $this->assertTokenType($tokens[6], Token::INDENTED_LITERAL_BLOCK);
-        $this->assertEquals(4, $tokens[6]->offset());
-        $this->assertTokenEquals($tokens[6], "    # only say good morning if it's morning\n\n    puts 'Good morning' if morning");
+        $this->assertTokens([
+            ['PARAGRAPH', 'This is a code example::'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['INDENTED_LITERAL_BLOCK', '    puts \'Hello!\''],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', '::'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['INDENTED_LITERAL_BLOCK', "    # only say good morning if it's morning\n\n    puts 'Good morning' if morning"],
+        ], $tokens);
     }
 
     public function testQuotedLiteralBlock()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 And some quoted block. ::
 
 > Hello world!
@@ -281,18 +273,17 @@ And some quoted block. ::
 RST
         );
 
-        $this->assertCount(3, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[0], 'And some quoted block. ::');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::QUOTED_LITERAL_BLOCK);
-        $this->assertTokenEquals($tokens[2], "> Hello world!\n>> Something else\n> Yeah.");
+        $this->assertTokens([
+            ['PARAGRAPH', 'And some quoted block. ::'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['QUOTED_LITERAL_BLOCK', "> Hello world!\n>> Something else\n> Yeah."],
+        ], $tokens);
     }
 
     public function testBlockQuote()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 Now comes a block quote.
 
     "It is my business to know things.  That is my trade."
@@ -305,21 +296,18 @@ Another one.
 RST
         );
 
-        $this->assertCount(7, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[0], 'Now comes a block quote.');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::BLOCK_QUOTE);
-        $this->assertEquals(4, $tokens[2]->offset());
-        $this->assertTokenEquals($tokens[2], "    \"It is my business to know things.  That is my trade.\"\n\n    -- Sherlock Holmes");
-        $this->assertTokenType($tokens[3], Token::WHITESPACE);
-        $this->assertTokenType($tokens[4], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[4], 'Another one.');
-        $this->assertTokenType($tokens[5], Token::WHITESPACE);
-        $this->assertTokenType($tokens[6], Token::BLOCK_QUOTE);
-        $this->assertEquals(4, $tokens[6]->offset());
-        $this->assertTokenEquals($tokens[6], '    Block quote 2');
+        $this->assertTokens([
+            ['PARAGRAPH', 'Now comes a block quote.'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['BLOCK_QUOTE', "    \"It is my business to know things.  That is my trade.\"\n\n    -- Sherlock Holmes"],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'Another one.'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['BLOCK_QUOTE', '    Block quote 2'],
+        ], $tokens);
     }
 
     public function testGridTable()
@@ -338,12 +326,14 @@ RST
 | body row 4             |            | - body elements.    |
 +------------------------+------------+---------------------+
 RST;
-        $tokens = Lexer::tokenize($table);
+        $tokens = $this->lexer->tokenize($table."\n\nSome text.");
 
-        $this->assertCount(1, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::GRID_TABLE);
-        $this->assertTokenEquals($tokens[0], $table);
+        $this->assertTokens([
+            ['GRID_TABLE', $table],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'Some text.'],
+        ], $tokens);
     }
 
     public function testSimpleTable()
@@ -358,17 +348,16 @@ False  True   False
 True   True   True
 =====  =====  =======
 RST;
-        $tokens = Lexer::tokenize($table);
+        $tokens = $this->lexer->tokenize($table);
 
-        $this->assertCount(1, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::SIMPLE_TABLE);
-        $this->assertTokenEquals($tokens[0], $table);
+        $this->assertTokens([
+            ['SIMPLE_TABLE', $table],
+        ], $tokens);
     }
 
     public function testHyperlinkTarget()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 .. _`other_target`:
 
 Some paragraph
@@ -381,26 +370,26 @@ Some paragraph
 RST
         );
 
-        $this->assertCount(8, $tokens);
+        $this->assertTokens([
+            ['HYPERLINK_TARGET', '.. _`other_target`:'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['PARAGRAPH', 'Some paragraph'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['HYPERLINK_TARGET', '.. _a-target:'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['HYPERLINK_TARGET', '.. _internal link: foo_'],
+            ['WHITESPACE', "\n"],
+            ['HYPERLINK_TARGET', ".. _`external: `:\n   http://symfony.com/"],
+        ], $tokens);
 
-        $this->assertTokenType($tokens[0], Token::HYPERLINK_TARGET);
-        $this->assertTokenEquals($tokens[0], '.. _`other_target`:');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[2], 'Some paragraph');
-        $this->assertTokenType($tokens[3], Token::WHITESPACE);
-        $this->assertTokenType($tokens[4], Token::HYPERLINK_TARGET);
-        $this->assertTokenEquals($tokens[4], '.. _a-target:');
-        $this->assertTokenType($tokens[5], Token::WHITESPACE);
-        $this->assertTokenType($tokens[6], Token::HYPERLINK_TARGET);
-        $this->assertTokenEquals($tokens[6], '.. _internal link: foo_');
-        $this->assertTokenType($tokens[7], Token::HYPERLINK_TARGET);
-        $this->assertTokenEquals($tokens[7], ".. _`external: `:\n   http://symfony.com/");
     }
 
     public function testFootnote()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 Some footnote [1]_.
 
 .. [1] The text
@@ -412,22 +401,21 @@ Some footnote [1]_.
 RST
         );
 
-        $this->assertCount(5, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::PARAGRAPH);
-        $this->assertTokenEquals($tokens[0], 'Some footnote [1]_.');
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::FOOTNOTE);
-        $this->assertTokenEquals($tokens[2], '.. [1] The text');
-        $this->assertTokenType($tokens[3], Token::FOOTNOTE);
-        $this->assertTokenEquals($tokens[3], '.. [#] And some other text');
-        $this->assertTokenType($tokens[4], Token::FOOTNOTE);
-        $this->assertTokenEquals($tokens[4], ".. [#note]\n   One starting below\n\n   with multiple lines!");
+        $this->assertTokens([
+            ['PARAGRAPH', 'Some footnote [1]_.'],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['FOOTNOTE', '.. [1] The text'],
+            ['WHITESPACE', "\n"],
+            ['FOOTNOTE', '.. [#] And some other text'],
+            ['WHITESPACE', "\n"],
+            ['FOOTNOTE', ".. [#note]\n   One starting below\n\n   with multiple lines!"],
+        ], $tokens);
     }
 
     public function testComment()
     {
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 .. This is a comment
 ..
    _so: is this!
@@ -440,27 +428,44 @@ RST
 RST
         );
 
-        $this->assertCount(5, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::COMMENT);
-        $this->assertTokenEquals($tokens[0], '.. This is a comment');
-        $this->assertTokenType($tokens[1], Token::COMMENT);
-        $this->assertTokenEquals($tokens[1], "..\n   _so: is this!");
-        $this->assertTokenType($tokens[2], Token::COMMENT);
-        $this->assertTokenEquals($tokens[2], "..\n   [and] this!");
-        $this->assertTokenType($tokens[3], Token::COMMENT);
-        $this->assertTokenEquals($tokens[3], "..\n   this:: too!");
-        $this->assertTokenType($tokens[4], Token::COMMENT);
-        $this->assertTokenEquals($tokens[4], "..\n   |even| this:: !");
+        $this->assertTokens([
+            ['COMMENT', '.. This is a comment'],
+            ['WHITESPACE', "\n"],
+            ['COMMENT', "..\n   _so: is this!"],
+            ['WHITESPACE', "\n"],
+            ['COMMENT', "..\n   [and] this!"],
+            ['WHITESPACE', "\n"],
+            ['COMMENT', "..\n   this:: too!"],
+            ['WHITESPACE', "\n"],
+            ['COMMENT', "..\n   |even| this:: !"],
+        ], $tokens);
     }
 
-    private function assertTokenType(Token $token, $type)
+    private function assertTokens($tokens, $actual)
     {
-        $this->assertTrue($token->isGivenType($type), $token->type(true));
+        foreach ($tokens as $i => $token) {
+            $this->assertTokenType(current($actual), constant(Token::class.'::'.$token[0]), 'index: '.$i);
+            $this->assertTokenEquals(current($actual), $token[1], 'index: '.$i);
+
+            if (isset($token[2])) {
+                $this->assertEquals($token[2], current($actual)->offset(), 'index: '.$i);
+            }
+
+            if (false === next($actual)) {
+                break;
+            }
+        }
+
+        $this->assertCount(count($tokens), $actual, 'There are more tokens than expected: '.implode(', ', array_map(function ($t) { return $t->type(true); }, $actual)));
     }
 
-    private function assertTokenEquals(Token $token, $value)
+    private function assertTokenType(Token $token, $type, $extra = null)
     {
-        $this->assertTrue($token->equals($value), "\nExpected content: ".json_encode($value)."\nActual content:   ".json_encode($token->content()));
+        $this->assertTrue($token->isGivenType($type), "\nActual type: ".$token->type(true).($extra ? ' ('.$extra.')' : ''));
+    }
+
+    private function assertTokenEquals(Token $token, $value, $extra = null)
+    {
+        $this->assertTrue($token->equals($value), "\nExpected value: ".json_encode($value)."\nActual value:   ".json_encode($token->value()).($extra ? ' ('.$extra.')' : ''));
     }
 }

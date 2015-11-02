@@ -16,33 +16,46 @@ class ShortPhpSyntaxFixer extends AbstractFixer
     {
         /** @var Tokens|Token[] $tokens */
         $tokens = Tokens::fromMarkup($content);
+        $token = $tokens->current();
+        $index = 0;
 
-        foreach ($tokens as $index => $token) {
-            if (!$token->isGivenType(Token::DIRECTIVE)) {
+        do {
+            if (!$token->isGivenType(Token::DIRECTIVE_MARKER)) {
                 continue;
             }
 
-            $subTokens = $token->subTokens();
-            if (
-                false === strpos($subTokens[0]->content(), '.. code-block::')
-                || ($subTokens[1]->isGivenType(Token::DIRECTIVE_ARGUMENT) && !$subTokens[1]->equals('php'))
-            ) {
+            if (false === strpos($token->value(), '.. code-block::')) {
                 continue;
             }
 
-            $prevToken = $tokens[$tokens->getPrevNonWhitespace()];
+            while ($tokens->current()->isGivenType([Token::DIRECTIVE_MARKER, Token::WHITESPACE]) && $tokens->moveNext());
+
+            if (!$tokens->current()->isGivenType(Token::DIRECTIVE_ARGUMENT) || !$tokens->current()->equals('php')) {
+                continue;
+            }
+
+            $prevToken = $tokens[$tokens->getPrevNonWhitespace($index)];
 
             if (!$prevToken->isGivenType(Token::PARAGRAPH)) {
                 continue;
             }
 
-            if (':' === substr(rtrim($prevToken->content()), -1)) {
-                $prevToken->withValue(preg_replace('/(?<!:):\s*$/', '::', $prevToken->content()));
+            if (':' === substr(rtrim($prevToken->value()), -1)) {
+                $prevToken->withValue(preg_replace('/(?<!:):\s*$/', '::', $prevToken->value()));
 
-                $tokens->removeAt($index);
-                $tokens->insertAt($index, Token::indentedLiteralBlock()->withValue($token->subTokens()->findGivenKind(Token::DIRECTIVE_CONTENT)->content()));
+                for (
+                    $i = $tokens->getPrevNonWhitespace($index) + 1;
+                    isset($tokens[$i])
+                    && $tokens[$i]->isGivenType([Token::WHITESPACE, Token::DIRECTIVE_ARGUMENT, Token::DIRECTIVE_MARKER]);
+                    $i++
+                ) {
+                    $tokens->removeAt($i--);
+                }
+
+                $tokens->insertAt($i, Token::whitespace()->withValue("\n"));
+                $tokens->insertAt($i, Token::whitespace()->withValue("\n"));
             }
-        }
+        } while (false !== ($token = $tokens->moveNext()) && ++$index);
 
         return $tokens->generateMarkup();
     }

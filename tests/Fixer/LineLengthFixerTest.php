@@ -71,6 +71,7 @@ RST
                 'Definitions are allowed to cross 72 characters'
             ],
 
+            /* todo: implement lists
             [
                 <<<RST
 - Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce purus justo, congue molestie laoreet id,
@@ -105,7 +106,7 @@ RST
 RST
                 ,
                 'Lists are correctly indented'
-            ],
+            ],*/
 
             /* fixme: implement code wrapping
             [

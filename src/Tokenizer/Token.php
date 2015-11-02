@@ -11,6 +11,7 @@ namespace Docbot\Tokenizer;
  * @method static Token bulletList()
  * @method static Token enumeratedList()
  * @method static Token definitionList()
+ * @method static Token endOfList()
  * @method static Token quotedLiteralBlock()
  * @method static Token indentedLiteralBlock()
  * @method static Token blockQuote()
@@ -22,8 +23,9 @@ namespace Docbot\Tokenizer;
  * @method static Token directiveMarker()
  * @method static Token directiveArgument()
  * @method static Token directiveOption()
- * @method static Token directiveContent()
- * @method static Token sectionTitle()
+ * @method static Token directiveEnd()
+ * @method static Token headline()
+ * @method static Token headlineUnderline()
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
@@ -40,6 +42,7 @@ class Token
     const BULLET_LIST = 5;
     const ENUMERATED_LIST = 6;
     const DEFINITION_LIST = 7;
+    const END_OF_LIST = 22;
 
     const QUOTED_LITERAL_BLOCK = 8;
     const INDENTED_LITERAL_BLOCK = 9;
@@ -55,9 +58,10 @@ class Token
     const DIRECTIVE_MARKER = 16;
     const DIRECTIVE_ARGUMENT = 17;
     const DIRECTIVE_OPTION = 18;
-    const DIRECTIVE_CONTENT = 19;
-    
-    const SECTION_TITLE = 20;
+    const DIRECTIVE_END = 19;
+
+    const HEADLINE = 20;
+    const HEADLINE_UNDERLINE = 21;
 
     private $type;
     private $value;
@@ -138,6 +142,19 @@ class Token
         return $this->value;
     }
 
+    public function indentedValue()
+    {
+        if ("\n" === $this->value) {
+            return $this->value;
+        }
+
+        $prefix = str_repeat(' ', $this->offset());
+
+        return implode("\n", array_map(function ($line) use ($prefix) {
+            return $prefix.$line;
+        }, explode("\n", $this->value)));
+    }
+
     /**
      * The offset of this token from the start of the line.
      *
@@ -170,35 +187,7 @@ class Token
      */
     public function content()
     {
-        $indent = function ($value, $level) {
-            return implode(
-                "\n",
-                array_map(
-                    function ($line) use ($level) {
-                        return ($line ? str_repeat(' ', $level) : '').$line;
-                    },
-                    explode("\n", $value)
-                )
-            );
-        };
-        
-        if (!$this->isCompound()) {
-            return $indent($this->value(), $this->offset());
-        }
-
-        $content = '';
-
-        foreach ($this->subTokens() as $token) {
-            if ($token->isGivenType(self::DIRECTIVE_ARGUMENT)) {
-                $content = rtrim($content, "\n\r").$token->value()."\n";
-
-                continue;
-            }
-            
-            $content .= $indent($token->content(), $this->offset())."\n";
-        }
-
-        return rtrim($content, "\n\r");
+        return Dumper::dumpToken($this);
     }
 
     /**
@@ -261,7 +250,7 @@ class Token
             ;
         }
 
-        return $other === $this->content();
+        return $other === $this->value();
     }
 
     public static function __callStatic($type, array $arguments)

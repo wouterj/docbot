@@ -28,19 +28,17 @@ class UnstyledDirectivesFixer extends AbstractFixer
         $tokens = Tokens::fromMarkup($content);
 
         foreach ($tokens as $token) {
-            if (!$token->isGivenType(Token::DIRECTIVE)) {
+            if (!$token->isGivenType(Token::DIRECTIVE_MARKER)) {
                 continue;
             }
 
-            $marker = $token->subTokens()[0];
-
-            $marker->withValue(preg_replace_callback('/(\.\.\s)(.*?)(::)/', function ($matches) {
+            $token->withValue(preg_replace_callback('/(\.\.\s)(.*?)(::)/', function ($matches) {
                 if (!isset($this->unstyledDirectivesReplacement[$matches[2]])) {
                     return $matches[0];
                 }
 
                 return $matches[1].$this->unstyledDirectivesReplacement[$matches[2]].$matches[3];
-            }, $marker->content()));
+            }, $token->value()));
         }
 
         return $tokens->generateMarkup();

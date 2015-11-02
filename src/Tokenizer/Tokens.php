@@ -9,6 +9,15 @@ namespace Docbot\Tokenizer;
  */
 class Tokens extends \SplFixedArray
 {
+    private static $cache = [];
+    /** @var Lexer */
+    private static $lexer;
+
+    public static function clearCache()
+    {
+        self::$cache = [];
+    }
+
     public static function fromArray(array $tokens)
     {
         $collection = new self(count($tokens));
@@ -29,7 +38,17 @@ class Tokens extends \SplFixedArray
      */
     public static function fromMarkup($markup)
     {
-        return self::fromArray(Lexer::tokenize($markup));
+        $hash = crc32($markup);
+
+        if (isset(self::$cache[$hash])) {
+            return self::$cache[$hash];
+        }
+
+        if (null === self::$lexer) {
+            self::$lexer = new Lexer();
+        }
+
+        return self::$cache[$hash] = self::fromArray(self::$lexer->tokenize($markup));
     }
 
     /**
@@ -50,9 +69,11 @@ class Tokens extends \SplFixedArray
         return $index;
     }
 
-    public function getPrevNonWhitespace()
+    public function getPrevNonWhitespace($index = null)
     {
-        $index = $this->key();
+        if (null === $index) {
+            $index = $this->key();
+        }
 
         do {
             $index--;
@@ -101,17 +122,10 @@ class Tokens extends \SplFixedArray
     public function generateMarkup(Token $token = null)
     {
         if (null !== $token) {
-            return $token->content();
+            return Dumper::dumpToken($token);
         }
 
-        $this->rewind();
-        $markup = '';
-
-        foreach ($this as $token) {
-            $markup .= $this->generateMarkup($token)."\n";
-        }
-
-        return $markup ? substr($markup, 0, -1) : '';
+        return Dumper::dump($this);
     }
 
     public function getNextTokenOfKind()
@@ -121,18 +135,29 @@ class Tokens extends \SplFixedArray
     public function getPrevTokenOfKind()
     {
     }
-    
+
     public function last()
     {
         $this->rewind();
-        
+
         $last = null;
         while ($this->valid()) {
             $last = $this->current();
             $this->next();
         }
-        
+
         return $last;
+    }
+
+    public function moveNext()
+    {
+        $this->next();
+
+        if ($this->valid()) {
+            return $this->current();
+        }
+
+        return false;
     }
 
     public function findSequence()

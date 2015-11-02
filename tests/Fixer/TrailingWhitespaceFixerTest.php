@@ -6,6 +6,11 @@ use Docbot\Fixer\TrailingWhitespaceFixer;
 
 class TrailingWhitespaceFixerTest extends FixerTestCase
 {
+    protected function setUp()
+    {
+        $this->markTestSkipped('The trailing whitespace fixer is temporary disabled.');
+    }
+
     protected function createFixer()
     {
         return new TrailingWhitespaceFixer();
@@ -17,7 +22,7 @@ class TrailingWhitespaceFixerTest extends FixerTestCase
             [
                 <<<RST
 a file with just normal text
-    
+
 followed by nasty trailing whitespace
 
 and a simple empty line.
@@ -37,7 +42,7 @@ RST
 
             [
                 <<<RST
-a line with whitespace after it   
+a line with whitespace after it
 a tab is also whitespace\t
 RST
                 ,
@@ -49,7 +54,7 @@ RST
                 ,
                 'Whitespace at the end of a line is not allowed'
             ],
-            
+
             [
                 <<<RST
 .. include:: /book/map.rst.inc
@@ -67,7 +72,7 @@ Cookbook
 RST
                 ,
             ],
-            
+
             [
                 <<<RST
 Let's start with the simplest web application we can think of in PHP::
