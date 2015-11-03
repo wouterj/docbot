@@ -213,9 +213,7 @@ RST
 
     public function testDefinitionList()
     {
-        $this->markTestSkipped('Definition lists are not yet implemented');
-
-        $tokens = Lexer::tokenize(<<<RST
+        $tokens = $this->lexer->tokenize(<<<RST
 term 1
     Definition 1.
 
@@ -224,13 +222,12 @@ term 2 : classifier
 RST
         );
 
-        $this->assertCount(3, $tokens);
-
-        $this->assertTokenType($tokens[0], Token::DEFINITION_LIST);
-        $this->assertTokenEquals($tokens[0], "term 1\n    Definition 1.");
-        $this->assertTokenType($tokens[1], Token::WHITESPACE);
-        $this->assertTokenType($tokens[2], Token::DEFINITION_LIST);
-        $this->assertTokenEquals($tokens[2], "term 2 : classifier\n    Definition 2.");
+        $this->assertTokens([
+            ['DEFINITION_LIST', "term 1\n    Definition 1."],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['DEFINITION_LIST', "term 2 : classifier\n    Definition 2."],
+        ], $tokens);
     }
 
     public function testIndentedLiteralBlock()

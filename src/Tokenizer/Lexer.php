@@ -409,44 +409,6 @@ class Lexer
             return;
         }
 
-//        /* fixme: this just takes other lines
-//         *
-//         * Definition Lists
-//         *
-//         * +----------------------------+
-//         * | term [ " : " classifier ]* |
-//         * +--+-------------------------+--+
-//         *    | definition                 |
-//         *    | (body elements)+           |
-//         *    +----------------------------+
-//         *
-//        $indent = self::getIndent($line);
-//        if (
-//            $this->moveToNextLine()
-//            && !self::isBlank(current($lines))
-//            && self::isIndentedHigher(current($lines), $indent)
-//        ) {
-//            $value = [$line, current($lines)];
-//            $indent = self::getIndent(current($lines));
-//
-//            while (
-//                $this->moveToNextLine()
-//                && (self::isBlank(current($lines))
-//                    || self::isIndentedEquallyOrHigher(current($lines), $indent)
-//                )
-//            ) {
-//                $value[] = current($lines);
-//            }
-//
-//            prev($lines);
-//
-//            self::prevIfLastLineIsBlank($lines, $value);
-//
-//            return Token::definitionList()->withValue(implode("\n", $value));
-//        } else {
-//            self::prevIfNotStartOfFile($lines);
-//        }*/
-//
         /* Section Titles
          *
          * +------------------------------------+
@@ -462,6 +424,38 @@ class Lexer
 
             $this->moveToNextLine();
             $this->tokens[] = Token::headlineUnderline()->withValue($this->currentLine());
+
+            if (null !== $this->getNextLine()) {
+                $this->insertNewLineToken();
+            }
+
+            return;
+        }
+
+        /* Definition Lists
+         */
+        $indent = self::getIndent($this->currentLine());
+        $nextLine = $this->getNextLine();
+        if ('' !== trim($nextLine) && self::isIndentedHigher($nextLine, $indent)) {
+            $value = [$this->currentLine()];
+            $startIndent = self::getIndent($nextLine);
+
+            while (
+                $this->moveToNextLine()
+                && ($this->isCurrentLineBlank()
+                    || self::isIndentedEquallyOrHigher($this->currentLine(), $startIndent)
+                )
+            ) {
+                $value[] = $this->currentLine();
+            }
+
+            if ('' === trim(end($value))) {
+                array_pop($value);
+                $this->moveToPrevLine();
+                $this->moveToPrevLine();
+            }
+
+            $this->tokens[] = Token::definitionList()->withValue(implode("\n", $value))->atOffset($startIndent);
 
             if (null !== $this->getNextLine()) {
                 $this->insertNewLineToken();
@@ -542,6 +536,18 @@ class Lexer
 
         // fixme: this shouldn't be the way forward...
         return '' !== trim(current($lines)) ? current($lines) : prev($lines);
+    }
+
+    private function getPrevLine()
+    {
+        if ($this->moveToPrevLine()) {
+            $line = $this->currentLine();
+            $this->moveToNextLine();
+
+            return $line;
+        }
+
+        reset($this->lines);
     }
 
     private function getNextLine()
