@@ -140,13 +140,20 @@ class Tokens extends \SplFixedArray
     {
         $this->rewind();
 
-        $last = null;
-        while ($this->valid()) {
-            $last = $this->current();
-            $this->next();
+        while ($this->moveNext());
+
+        return $this->movePrev();
+    }
+
+    public function movePrev()
+    {
+        $this->prev();
+
+        if ($this->valid()) {
+            return $this->current();
         }
 
-        return $last;
+        return false;
     }
 
     public function moveNext()

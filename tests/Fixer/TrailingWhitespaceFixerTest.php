@@ -6,10 +6,10 @@ use Docbot\Fixer\TrailingWhitespaceFixer;
 
 class TrailingWhitespaceFixerTest extends FixerTestCase
 {
-    protected function setUp()
+   /* protected function setUp()
     {
         $this->markTestSkipped('The trailing whitespace fixer is temporary disabled.');
-    }
+    }*/
 
     protected function createFixer()
     {
@@ -19,7 +19,7 @@ class TrailingWhitespaceFixerTest extends FixerTestCase
     public function getExamples()
     {
         return [
-            [
+            /*[
                 <<<RST
 a file with just normal text
 
@@ -53,7 +53,7 @@ a tab is also whitespace
 RST
                 ,
                 'Whitespace at the end of a line is not allowed'
-            ],
+            ],*/
 
             [
                 <<<RST
@@ -71,6 +71,22 @@ Cookbook
 
 RST
                 ,
+                'A new line feed character is added at the end of the file.'
+            ],
+
+            [
+                <<<RST
+Some text.
+
+
+RST
+                ,
+                <<<RST
+Some text.
+
+RST
+                ,
+                'To many new lines at the end of the file are removed.'
             ],
 
             [

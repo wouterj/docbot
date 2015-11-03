@@ -17,33 +17,21 @@ class TrailingWhitespaceFixer extends AbstractFixer
         /** @var Token[]|Tokens $tokens */
         $tokens = Tokens::fromMarkup($content);
 
-        foreach ($tokens as $token) {
-            $this->fixToken($token);
-        }
-        
-        
+        // add new line feed at the end of the file if not present
         if (!$tokens->last()->isWhitespace()) {
-            $tokens->insertAt($tokens->key(), Token::whitespace());
+            $tokens->insertAt($tokens->key() + 1, Token::whitespace()->withValue("\n"));
+        } else {
+            $tokens->prev();
         }
-        
+
+        // remove empty lines at the end of the file
+        while ($tokens->valid() && $tokens->current()->isWhitespace()) {
+            $tokens->removeAt($tokens->key());
+
+            $tokens->prev();
+        }
+
         return $tokens->generateMarkup();
-    }
-
-    private function fixToken(Token $token)
-    {
-        if ($token->isCompound()) {
-            foreach ($token->subTokens() as $token) {
-                $this->fixToken($token);
-            }
-
-            return;
-        }
-        
-        if ($token->isGivenType(Token::DIRECTIVE_MARKER)) {
-            return;
-        }
-
-        $token->withValue(preg_replace('/\h+$/m', '', $token->value()));
     }
 
     /** @inheritDoc */

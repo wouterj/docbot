@@ -103,6 +103,51 @@ RST
 
             [
                 <<<RST
+or PHP. Have a look at this sample of the default Symfony configuration:
+
+.. code-block:: yaml
+
+    # app/config/config.yml
+    imports:
+        - { resource: parameters.yml }
+        - { resource: security.yml }
+        - { resource: services.yml }
+
+    framework:
+        #esi:             ~
+        #translator:      { fallbacks: ["%locale%"] }
+        secret:          "%secret%"
+        router:
+            resource: "%kernel.root_dir%/config/routing.yml"
+            strict_requirements: "%kernel.debug%"
+        form:            true
+        csrf_protection: true
+        validation:      { enable_annotations: true }
+        templating:      { engines: ['twig'] }
+        default_locale:  "%locale%"
+        trusted_proxies: ~
+        session:         ~
+
+    # Twig Configuration
+    twig:
+        debug:            "%kernel.debug%"
+        strict_variables: "%kernel.debug%"
+
+    # Swift Mailer Configuration
+    swiftmailer:
+        transport: "%mailer_transport%"
+        host:      "%mailer_host%"
+        username:  "%mailer_user%"
+        password:  "%mailer_password%"
+        spool:     { type: memory }
+
+    # ...
+
+RST
+            ],
+
+            [
+                <<<RST
 * Route names are used for template names;
 
 * ``500`` errors are now managed correctly;

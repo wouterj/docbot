@@ -16,6 +16,7 @@ class ShortPhpSyntaxFixer extends AbstractFixer
     {
         /** @var Tokens|Token[] $tokens */
         $tokens = Tokens::fromMarkup($content);
+        $tokens->rewind();
         $token = $tokens->current();
         $index = 0;
 

@@ -76,7 +76,6 @@ RST
             ['PARAGRAPH', 'The larch. Wikipedia says.', 4],
             ['WHITESPACE', "\n"],
             ['WHITESPACE', "\n"],
-            ['DIRECTIVE_END', null],
             ['PARAGRAPH', 'No longer in directive.'],
         ], $tokens);
     }
@@ -86,6 +85,15 @@ RST
         $tokens = $this->lexer->tokenize(<<<RST
 .. versionadded:: 2.5
     A cool new feature.
+
+.. toctree::
+   :maxdepth: 1
+
+   the_big_picture
+   the_view
+   the_controller
+   the_architecture
+
 RST
         );
 
@@ -95,7 +103,15 @@ RST
             ['DIRECTIVE_ARGUMENT', '2.5'],
             ['WHITESPACE', "\n"],
             ['PARAGRAPH', 'A cool new feature.', 4],
-            ['DIRECTIVE_END', null],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_MARKER', '.. toctree::'],
+            ['WHITESPACE', "\n"],
+            ['DIRECTIVE_OPTION', ':maxdepth: 1', 3],
+            ['WHITESPACE', "\n"],
+            ['WHITESPACE', "\n"],
+            ['RAW', "   the_big_picture\n   the_view\n   the_controller\n   the_architecture", 0],
+            ['WHITESPACE', "\n"],
         ], $tokens);
     }
 
@@ -123,18 +139,15 @@ RST
             ['DIRECTIVE_ARGUMENT', 'php'],
             ['WHITESPACE', "\n"],
             ['WHITESPACE', "\n"],
-            ['PARAGRAPH', 'echo \'Hello\';', 8],
+            ['RAW', '    echo \'Hello\';', 4],
             ['WHITESPACE', "\n"],
             ['WHITESPACE', "\n"],
-            ['DIRECTIVE_END', null],
             ['DIRECTIVE_MARKER', '.. code-block::', 4],
             ['WHITESPACE', ' '],
             ['DIRECTIVE_ARGUMENT', 'ruby'],
             ['WHITESPACE', "\n"],
             ['WHITESPACE', "\n"],
-            ['PARAGRAPH', 'puts \'Hello\'', 8],
-            ['DIRECTIVE_END', null],
-            ['DIRECTIVE_END', null],
+            ['RAW', '    puts \'Hello\'', 4],
         ], $tokens);
     }
 
@@ -216,17 +229,21 @@ RST
         $tokens = $this->lexer->tokenize(<<<RST
 term 1
     Definition 1.
-
-term 2 : classifier
+term 2
     Definition 2.
+
+term 3 : classifier
+    Definition 3.
 RST
         );
 
         $this->assertTokens([
-            ['DEFINITION_LIST', "term 1\n    Definition 1."],
+            ['DEFINITION_LIST', "term 1\n    Definition 1.", 0],
+            ['WHITESPACE', "\n"],
+            ['DEFINITION_LIST', "term 2\n    Definition 2.", 0],
             ['WHITESPACE', "\n"],
             ['WHITESPACE', "\n"],
-            ['DEFINITION_LIST', "term 2 : classifier\n    Definition 2."],
+            ['DEFINITION_LIST', "term 3 : classifier\n    Definition 3.", 0],
         ], $tokens);
     }
 

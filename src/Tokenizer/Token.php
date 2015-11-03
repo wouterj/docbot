@@ -5,8 +5,7 @@ namespace Docbot\Tokenizer;
 /**
  * @method static Token whitespace()
  * @method static Token comment()
- * @method static Token document()
- * @method static Token section()
+ * @method static Token raw()
  * @method static Token paragraph()
  * @method static Token bulletList()
  * @method static Token enumeratedList()
@@ -35,8 +34,7 @@ class Token
 
     const COMMENT = 1;
 
-    const DOCUMENT = 2;
-    const SECTION = 3;
+    const RAW = 2;
     const PARAGRAPH = 4;
 
     const BULLET_LIST = 5;
@@ -58,7 +56,6 @@ class Token
     const DIRECTIVE_MARKER = 16;
     const DIRECTIVE_ARGUMENT = 17;
     const DIRECTIVE_OPTION = 18;
-    const DIRECTIVE_END = 19;
 
     const HEADLINE = 20;
     const HEADLINE_UNDERLINE = 21;
@@ -228,6 +225,7 @@ class Token
             || ($this->isGivenType(self::DIRECTIVE)
                && false !== strpos($this->subTokens()[0]->content(), '.. code-block::')
             )
+            || $this->isGivenType(self::RAW)
         ;
     }
 

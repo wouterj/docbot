@@ -13,6 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\CS\ErrorsManager;
 use Symfony\CS\FixerFileProcessedEvent;
 
 /**
@@ -112,9 +113,30 @@ class Fix extends Command
             }
         });
 
+        $errorsManager = new ErrorsManager();
+
+        $docbot->setErrorsManager($errorsManager);
+
         $result = $docbot->fix($config);
 
         $output->writeln('');
+
+        if (!$errorsManager->isEmpty()) {
+            if ($output->isVerbose()) {
+                $style->section('Errors');
+
+                foreach ($errorsManager->getErrors() as $error) {
+                    $style->writeln(sprintf(
+                        ' * [%s] %s (file: %s)',
+                        $error['type'],
+                        reset(explode("\nStack trace:", $error['message'])),
+                        $error['filepath']
+                    ));
+                }
+            }
+
+            return 1;
+        }
 
         if ($output->isVeryVerbose()) {
             $output->writeln('');
@@ -122,14 +144,9 @@ class Fix extends Command
             $style->section('Full Report');
 
             foreach ($result as $file => $r) {
-                $output->writeln([
-                    rtrim($this->filesystem->makePathRelative($file, getcwd()), '/\\'),
-                    ''
-                ]);
+                $style->writeln(rtrim($file, '/\\'));
 
-                foreach ($r['appliedFixers'] as $fixer) {
-                    $output->writeln('- '.$fixer);
-                }
+                $style->listing($r['appliedFixers']);
             }
         }
     }

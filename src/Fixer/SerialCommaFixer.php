@@ -29,14 +29,6 @@ class SerialCommaFixer extends AbstractFixer
 
     private function fixToken(Token $token)
     {
-        if ($token->isCompound()) {
-            foreach ($token->subTokens() as $subToken) {
-                $this->fixToken($subToken);
-            }
-
-            return;
-        }
-
         $lines = explode("\n", $token->value());
         $fixedLines = [];
         $i = 0;
@@ -48,8 +40,11 @@ class SerialCommaFixer extends AbstractFixer
                 continue;
             }
 
+            // only remove the comma if it's in a listing. Currently this
+            // means: it has at least 2 comma's before in the previous and
+            // current line.
             $searchLine = ($i >= 1 ? $fixedLines[$i - 1] : '').' '.substr($line, 0, $pos);
-            if (substr_count($searchLine, ',') < 1) {
+            if (substr_count($searchLine, ',') < 3) {
                 $fixedLines[] = $line;
                 $i++;
 

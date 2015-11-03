@@ -50,12 +50,13 @@ class Lexer
          *         |                               |
          *         +-------------------------------+
          */
-        if (preg_match('/^(\s*)(\.\.\s+'.$simpleNameRegex.'::)(\s*$|\s+.+$)/', $this->currentLine(), $matches)) {
+        if (preg_match('/^(\s*)(\.\.\s+('.$simpleNameRegex.')::)(\s*$|\s+.+$)/', $this->currentLine(), $matches)) {
             $this->tokens[] = Token::directiveMarker()->withValue($matches[2])->atOffset(strlen($matches[1]));
+            $type = $matches[3];
 
-            if (trim($matches[3])) {
+            if (trim($matches[4])) {
                 $this->tokens[] = Token::whitespace()->withValue(' ');
-                $this->tokens[] = Token::directiveArgument()->withValue(substr($matches[3], 1));
+                $this->tokens[] = Token::directiveArgument()->withValue(substr($matches[4], 1));
             }
 
             $this->insertNewLineToken();
@@ -86,19 +87,40 @@ class Lexer
 
             $this->moveToPrevLine();
 
-            $lexer = new Lexer();
+            if ('code-block' === $type || 'index' === $type || 'toctree' === $type) {
+                if ('' === trim(reset($content))) {
+                    $this->insertNewLineToken();
+                    array_shift($content);
+                }
 
-            $contentTokens = $lexer->tokenize(implode("\n", array_map(function ($l) use ($indent) {
-                return substr($l, $indent);
-            }, $content)));
+                $insertNewLine = false;
+                if ('' === trim(end($content))) {
+                    $insertNewLine = true;
+                    array_pop($content);
+                }
 
-            $this->tokens = array_merge($this->tokens, array_map(function ($t) use ($indent) {
-                $t->atOffset($t->offset() + $indent);
+                $this->tokens[] = Token::raw()->withValue(implode("\n", $content));
+                if ($insertNewLine) {
+                    $this->insertNewLineToken();
+                }
 
-                return $t;
-            }, $contentTokens));
+                if (null !== $this->getNextLine()) {
+                    $this->insertNewLineToken();
+                }
+            } else {
 
-            $this->tokens[] = Token::directiveEnd();
+                $lexer = new Lexer();
+
+                $contentTokens = $lexer->tokenize(implode("\n", array_map(function ($l) use ($indent) {
+                    return substr($l, $indent);
+                }, $content)));
+
+                $this->tokens = array_merge($this->tokens, array_map(function ($t) use ($indent) {
+                    $t->atOffset($t->offset() + $indent);
+
+                    return $t;
+                }, $contentTokens));
+            }
 
             return;
         }
@@ -449,13 +471,14 @@ class Lexer
                 $value[] = $this->currentLine();
             }
 
+            $this->moveToPrevLine();
+
             if ('' === trim(end($value))) {
                 array_pop($value);
                 $this->moveToPrevLine();
-                $this->moveToPrevLine();
             }
 
-            $this->tokens[] = Token::definitionList()->withValue(implode("\n", $value))->atOffset($startIndent);
+            $this->tokens[] = Token::definitionList()->withValue(implode("\n", $value))->atOffset($indent);
 
             if (null !== $this->getNextLine()) {
                 $this->insertNewLineToken();

@@ -34,15 +34,14 @@ class DocbotExtension extends Extension
         $definition
             ->addMethodCall('setUsingCache', [false])
             ->addMethodCall('fixers', [[
-                new Definition(Fixer\EmptyFixer::class),
 //                new Definition(Fixer\DirectiveWhitespaceFixer::class),
-//                new Definition(Fixer\TrailingWhitespaceFixer::class),
 //                new Definition(Fixer\LineLengthFixer::class),
-//                new Definition(Fixer\SerialCommaFixer::class),
-//                new Definition(Fixer\ShortPhpSyntaxFixer::class),
-//                new Definition(Fixer\TitleLevelFixer::class),
-//                new Definition(Fixer\TitleUnderlineFixer::class),
-//                new Definition(Fixer\UnstyledDirectivesFixer::class),
+                new Definition(Fixer\SerialCommaFixer::class),
+                new Definition(Fixer\ShortPhpSyntaxFixer::class),
+                new Definition(Fixer\TitleLevelFixer::class),
+                new Definition(Fixer\TitleUnderlineFixer::class),
+                new Definition(Fixer\UnstyledDirectivesFixer::class),
+                new Definition(Fixer\TrailingWhitespaceFixer::class),
             ]])
         ;
         $container->setDefinition(self::CONFIG_ID, $definition);
