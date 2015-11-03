@@ -20,7 +20,7 @@ use Symfony\CS\FixerFileProcessedEvent;
  *
  * @author Wouter J <wouter@wouterj.nl>
  */
-class Lint extends Command
+class Fix extends Command
 {
     private $diff;
     /** @var Filesystem */
@@ -33,8 +33,8 @@ class Lint extends Command
 
     public function configure()
     {
-        $this->setName('lint')
-            ->setDescription('Reports any problems found in the given files')
+        $this->setName('fix')
+            ->setDescription('Fixes the given files')
             ->addArgument('path', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'One file, list of files or a directory')
             ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Where to put the output', 'cli')
             ->addOption('ignore', 'i', InputOption::VALUE_REQUIRED, 'Pattern to ignore files')
@@ -46,7 +46,7 @@ class Lint extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->filesystem = new Filesystem();
-        
+
         if ($input->getOption('diff')) {
             $this->diff = $input->getOption('diff');
         }
@@ -55,9 +55,9 @@ class Lint extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $style = new SymfonyStyle($input, $output);
-        
+
         $style->title('Docbot\'s Review');
-        
+
         $files = array();
         $directories = array();
         foreach ($input->getArgument('path') as $path) {
@@ -66,17 +66,17 @@ class Lint extends Command
                     $path = getcwd().DIRECTORY_SEPARATOR.$path;
                 }
             }
-            
+
             if (is_file($path)) {
                 $files[] = $path;
             } elseif (null !== $path) {
                 $directories[] = $path;
             }
         }
-        
+
         /** @var Docbot $docbot */
         $docbot = $this->getContainer()->get(DocbotExtension::DOCBOT_ID);
-        
+
         $config = $this->getContainer()->get(DocbotExtension::CONFIG_ID);
         if (0 === count($directories)) {
             $config->finder(new \ArrayIterator(array_map(function ($filename) {
@@ -89,36 +89,36 @@ class Lint extends Command
                 'Can only fix either one or more files, or one or more directories, but a mix of files and directories given'
             );
         }
-        
+
         $docbot->listen(FixerFileProcessedEvent::NAME, function (FixerFileProcessedEvent $event) use ($style) {
             $statusString = $event->getStatusAsString();
-            
+
             switch ($statusString) {
                 case 'I':
                 case 'E':
                     $style->write('<fg=red>'.$statusString.'</>');
                     break;
-                    
+
                 case '.':
                     $style->write('<fg=green>.</>');
                     break;
-                    
+
                 case 'F':
                     $style->write('<fg=yellow>F</>');
                     break;
-                    
+
                 default:
                     $style->write($statusString);
             }
         });
-        
+
         $result = $docbot->fix($config);
-        
+
         $output->writeln('');
-        
+
         if ($output->isVeryVerbose()) {
             $output->writeln('');
-            
+
             $style->section('Full Report');
 
             foreach ($result as $file => $r) {

@@ -29,14 +29,15 @@ class DocbotExtension extends Extension
     private function loadServices(ContainerBuilder $container)
     {
         $container->register(self::DOCBOT_ID, Docbot::class);
-        
+
         $definition = new Definition(Config::class);
         $definition
             ->addMethodCall('setUsingCache', [false])
             ->addMethodCall('fixers', [[
+                new Definition(Fixer\EmptyFixer::class),
 //                new Definition(Fixer\DirectiveWhitespaceFixer::class),
 //                new Definition(Fixer\TrailingWhitespaceFixer::class),
-                new Definition(Fixer\LineLengthFixer::class),
+//                new Definition(Fixer\LineLengthFixer::class),
 //                new Definition(Fixer\SerialCommaFixer::class),
 //                new Definition(Fixer\ShortPhpSyntaxFixer::class),
 //                new Definition(Fixer\TitleLevelFixer::class),
@@ -49,7 +50,7 @@ class DocbotExtension extends Extension
 
     private function loadCommands(ContainerBuilder $container)
     {
-        $definition = new Definition('Docbot\Command\Lint');
+        $definition = new Definition('Docbot\Command\Fix');
         $definition->addTag(CliExtension::COMMAND_TAG);//
         $container->setDefinition('command.lint', $definition);
     }
